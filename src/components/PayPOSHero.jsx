@@ -5,33 +5,34 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 gsap.registerPlugin(ScrollTrigger);
 
 /* ──────────────────────────────────────────────────────────────
-   TERMINAL CROP — devices6.png is 1290×1470, smartphone on left,
-   terminal on right. We crop to show ONLY the terminal.
-   Tweak the constants below to fine-tune the crop & screen overlay.
+   TERMINAL POSITIONING + IMAGE CROP
+   devices6.png contains a smartphone (left) + Verifone terminal (right).
+   We render the image at IMG_DISPLAY_WIDTH and shift it by IMG_OFFSET_X
+   inside an overflow:hidden mask so only the right device is visible.
    ───────────────────────────────────────────────────────────── */
-const TW              = 360;     // terminal container width (display px)
-const TH              = 620;     // terminal container height
-const IMG_W           = 500;     // image rendered width (scaled from 1290)
-const IMG_MARGIN_LEFT = -178;    // shift left to hide the smartphone
-const IMG_MARGIN_TOP  = -30;     // vertical adjustment
+const TERMINAL_WIDTH    = 420;
+const IMG_DISPLAY_WIDTH = 840;   // image rendered at 2× — adjust if proportions differ
+const IMG_OFFSET_X      = -420;  // shift left to hide the smartphone
 
-/* Fake Android screen overlay — positioned over the terminal's actual screen.
-   Adjust these 5 if the screen doesn't sit exactly on the terminal's display. */
-const SCREEN_LEFT     = 57;
-const SCREEN_TOP      = 55;
-const SCREEN_WIDTH    = 205;
-const SCREEN_HEIGHT   = 412;
-const SCREEN_RADIUS   = 16;
+/* ──────────────────────────────────────────────────────────────
+   FAKE SCREEN OVERLAY — adjust pixel-by-pixel to align with terminal
+   These five values position a div exactly over the terminal screen.
+   ───────────────────────────────────────────────────────────── */
+const SCREEN_TOP    = 82;
+const SCREEN_LEFT   = 50;
+const SCREEN_WIDTH  = 224;
+const SCREEN_HEIGHT = 385;
+const SCREEN_RADIUS = 24;
 
-const THW = TW / 2;
+const THW = TERMINAL_WIDTH / 2;
 
 const PRODUCTS = [
-  { id: 'paybylink', label: 'PayByLink',     short: 'Pay Link',  color: '#00d4ff', ox: -280, oy:  -80 },
-  { id: 'bnpl',      label: 'BNPL & Credit', short: 'BNPL',      color: '#a855f7', ox:  220, oy:  -60 },
-  { id: 'wero',      label: 'Wero',          short: 'Wero',      color: '#6366f1', ox: -300, oy:   60 },
-  { id: 'noshow',    label: 'NoShow',        short: 'NoShow',    color: '#10b981', ox:  240, oy:   80 },
-  { id: 'crypto',    label: 'Crypto',        short: 'Crypto',    color: '#f7931a', ox: -220, oy:  180 },
-  { id: 'a2a',       label: 'A2A & Wallets', short: 'A2A',       color: '#3b82f6', ox:  200, oy:  160 },
+  { id: 'paybylink', label: 'PayByLink',     short: 'PAY-BY-LINK', color: '#00d4ff', ox: -280, oy:  -80 },
+  { id: 'bnpl',      label: 'BNPL & Credit', short: 'BNPL',        color: '#a855f7', ox:  220, oy:  -60 },
+  { id: 'wero',      label: 'Wero',          short: 'WERO',        color: '#6366f1', ox: -300, oy:   60 },
+  { id: 'noshow',    label: 'NoShow',        short: 'NOSHOW',      color: '#10b981', ox:  240, oy:   80 },
+  { id: 'crypto',    label: 'Crypto',        short: 'CRYPTO',      color: '#f7931a', ox: -220, oy:  180 },
+  { id: 'a2a',       label: 'A2A & Wallets', short: 'A2A',         color: '#3b82f6', ox:  200, oy:  160 },
 ];
 
 const PARTICLES = [
@@ -43,10 +44,6 @@ const PARTICLES = [
   { id: 5,  size: 2, l: '59%', t: '79%', op: 0.20, dur: 6.1, del: -5.0 },
   { id: 6,  size: 2, l: '46%', t: '73%', op: 0.25, dur: 7.4, del: -2.0 },
   { id: 7,  size: 3, l: '37%', t: '56%', op: 0.20, dur: 4.2, del: -4.5 },
-  { id: 8,  size: 2, l: '41%', t: '34%', op: 0.30, dur: 6.0, del: -1.0 },
-  { id: 9,  size: 2, l: '62%', t: '21%', op: 0.20, dur: 8.3, del: -6.0 },
-  { id: 10, size: 3, l: '81%', t: '61%', op: 0.25, dur: 5.1, del: -3.0 },
-  { id: 11, size: 2, l: '53%', t: '86%', op: 0.20, dur: 7.2, del: -2.5 },
 ];
 
 const STEP      = 1.2;
@@ -113,62 +110,191 @@ function ProductIcon({ id, size = 24, color }) {
   }
 }
 
-/* ── Fake home screen — replaces the printed screen of the terminal with
-   our own UI: PAYPOS branding + clock when empty, progressive app grid
-   as products get absorbed by scroll. ── */
-function TerminalScreen({ absorbedIds }) {
-  const count = absorbedIds.size;
-  const time  = '09:00';
+/* ── Screen helpers ── */
+function ScreenStatusBar({ time, dim = false }) {
+  const color = dim ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.7)';
   return (
-    <div style={S.screen}>
-      {/* Status bar */}
-      <div style={S.statusBar}>
-        <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
-          <path d="M1 4.2a8 8 0 0110 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-          <path d="M2.7 6.6a5 5 0 016.6 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-          <circle cx="6" cy="9.5" r="0.6" fill="currentColor" />
-        </svg>
-        <span>{time}</span>
-        <svg width="12" height="7" viewBox="0 0 16 9" fill="none">
-          <rect x="0.5" y="0.5" width="12" height="8" rx="1.5" stroke="currentColor" />
-          <rect x="2" y="2" width="8" height="5" fill="currentColor" />
-          <rect x="13" y="3" width="1.6" height="3" fill="currentColor" />
-        </svg>
-      </div>
+    <div style={{
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      padding: '8px 12px', color, fontSize: 9, fontWeight: 600, letterSpacing: '0.08em',
+    }}>
+      <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+        <path d="M1 4.2a8 8 0 0110 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+        <path d="M2.7 6.6a5 5 0 016.6 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+        <path d="M4.2 9a2 2 0 013.6 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+        <circle cx="6" cy="10.5" r="0.6" fill="currentColor" />
+      </svg>
+      <span>{time}</span>
+      <svg width="16" height="9" viewBox="0 0 16 9" fill="none">
+        <rect x="0.5" y="0.5" width="12" height="8" rx="1.5" stroke="currentColor" />
+        <rect x="2" y="2" width="8" height="5" fill="currentColor" />
+        <rect x="13" y="3" width="1.6" height="3" fill="currentColor" />
+      </svg>
+    </div>
+  );
+}
 
-      {count === 0 ? (
-        /* Idle home screen — PAYPOS branding */
-        <div style={S.screenIdle}>
-          <div style={S.screenLogo}>PAYPOS</div>
-          <div style={S.screenTime}>{time}</div>
-          <div style={S.scanLineWrap}>
-            <div style={S.scanLine} />
-          </div>
+function ScreenHeader({ time }) {
+  return (
+    <div style={{
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      padding: '6px 12px',
+      borderBottom: '1px solid rgba(255,255,255,0.06)',
+      color: 'rgba(255,255,255,0.6)',
+      fontSize: 8, fontWeight: 700, letterSpacing: '0.18em',
+    }}>
+      <span>PAYPOS</span>
+      <span style={{ letterSpacing: '0.08em' }}>{time}</span>
+    </div>
+  );
+}
+
+function ScreenCell({ id, featured = false }) {
+  const p = PRODUCTS.find(x => x.id === id);
+  if (!p) return null;
+  const iconSize  = featured ? 48 : 32;
+  const labelSize = featured ? 10 : 8;
+  return (
+    <div className="pp-cell" style={{
+      background: `${p.color}1A`,
+      borderRadius: 14,
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      gap: featured ? 8 : 4,
+      padding: featured ? '14px 8px' : '6px',
+      flex: 1, minHeight: 0,
+      willChange: 'transform',
+    }}>
+      <ProductIcon id={id} size={iconSize} />
+      <span style={{
+        color: p.color, fontSize: labelSize, fontWeight: 700,
+        letterSpacing: '0.18em',
+      }}>{p.short}</span>
+    </div>
+  );
+}
+
+function Placeholder() {
+  return <div style={{ height: 42, borderRadius: 8, background: 'rgba(255,255,255,0.05)' }} />;
+}
+
+/* ── Screen content per state ───────────────────────────── */
+function ScreenContent({ state, time }) {
+  const inner = {
+    position: 'absolute', inset: 0,
+    display: 'flex', flexDirection: 'column',
+    background: state === 0
+      ? 'linear-gradient(180deg, #0d1b3e 0%, #0a1628 100%)'
+      : '#0d1b3e',
+  };
+
+  if (state === 0) {
+    return (
+      <div style={inner}>
+        <ScreenStatusBar time={time} dim />
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+          <div style={{ color: '#fff', fontSize: 18, fontWeight: 700, letterSpacing: '0.12em' }}>PAYPOS</div>
+          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, letterSpacing: '0.06em' }}>{time}</div>
         </div>
-      ) : (
-        <>
-          <div style={S.screenHeader}>
-            <span>PAYPOS</span>
-            <span style={{ color: '#00d4ff' }}>{count}/6</span>
-          </div>
-          <div style={S.appGrid}>
-            {PRODUCTS.map(p => {
-              const active = absorbedIds.has(p.id);
-              return (
-                <div key={p.id} style={S.appCell}>
-                  {active ? (
-                    <div style={{ ...S.appIconBox, background: `${p.color}26`, borderColor: `${p.color}55` }}>
-                      <ProductIcon id={p.id} size={16} />
-                    </div>
-                  ) : (
-                    <div style={S.appPlaceholder} />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
+        <div style={{ position: 'relative', height: 2, overflow: 'hidden' }}>
+          <div style={{
+            position: 'absolute', top: 0, left: 0, height: '100%', width: '60%',
+            background: 'linear-gradient(90deg, transparent, #00d4ff 50%, transparent)',
+            animation: 'pp-scanline 2s linear infinite',
+          }} />
+        </div>
+      </div>
+    );
+  }
+
+  if (state === 1) {
+    return (
+      <div style={inner}>
+        <ScreenHeader time={time} />
+        <div style={{ padding: '10px 10px 6px', flex: '0 0 42%', display: 'flex' }}>
+          <ScreenCell id="paybylink" featured />
+        </div>
+        <div style={{ padding: '0 10px 10px', display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+          <Placeholder /><Placeholder /><Placeholder />
+        </div>
+      </div>
+    );
+  }
+
+  if (state === 2) {
+    return (
+      <div style={inner}>
+        <ScreenHeader time={time} />
+        <div style={{ padding: '10px 10px 6px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, flex: '0 0 30%' }}>
+          <ScreenCell id="paybylink" />
+          <ScreenCell id="bnpl" />
+        </div>
+        <div style={{ padding: '0 10px 10px', display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
+          <Placeholder /><Placeholder />
+        </div>
+      </div>
+    );
+  }
+
+  if (state === 3) {
+    return (
+      <div style={inner}>
+        <ScreenHeader time={time} />
+        <div style={{ padding: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gridAutoRows: '1fr', gap: 6, flex: 1 }}>
+          <ScreenCell id="paybylink" />
+          <ScreenCell id="bnpl" />
+          <ScreenCell id="wero" />
+          <div />
+          <Placeholder /><Placeholder />
+        </div>
+      </div>
+    );
+  }
+
+  if (state === 4) {
+    return (
+      <div style={inner}>
+        <ScreenHeader time={time} />
+        <div style={{ padding: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gridAutoRows: '1fr', gap: 6, flex: 1 }}>
+          <ScreenCell id="paybylink" />
+          <ScreenCell id="bnpl" />
+          <ScreenCell id="wero" />
+          <ScreenCell id="noshow" />
+        </div>
+      </div>
+    );
+  }
+
+  if (state === 5) {
+    return (
+      <div style={inner}>
+        <ScreenHeader time={time} />
+        <div style={{ padding: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gridAutoRows: '1fr', gap: 6, flex: 1 }}>
+          <ScreenCell id="paybylink" />
+          <ScreenCell id="bnpl" />
+          <ScreenCell id="wero" />
+          <ScreenCell id="noshow" />
+          <ScreenCell id="crypto" />
+          <div />
+        </div>
+      </div>
+    );
+  }
+
+  /* state === 6 — final */
+  return (
+    <div style={inner} className="pp-state6">
+      <ScreenHeader time={time} />
+      <div style={{
+        textAlign: 'center', color: '#00d4ff',
+        fontSize: 9, fontWeight: 700, letterSpacing: '0.22em',
+        padding: '4px 0 0',
+      }}>
+        6 MODULES ACTIFS
+      </div>
+      <div style={{ padding: '8px 10px 10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gridAutoRows: '1fr', gap: 6, flex: 1 }}>
+        {PRODUCTS.map(p => <ScreenCell key={p.id} id={p.id} />)}
+      </div>
     </div>
   );
 }
@@ -186,6 +312,9 @@ export default function PayPOSHero() {
     () => typeof window !== 'undefined' && window.innerWidth < 768
   );
   const [absorbedIds, setAbsorbedIds] = useState(new Set());
+  const time = '09:52 am';
+  const activeState = absorbedIds.size;
+  const intense = activeState === 6;
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)');
@@ -275,9 +404,7 @@ export default function PayPOSHero() {
             PayPOS centralise tous vos moyens de paiement en un seul terminal Android.
           </p>
         </div>
-        <TerminalImage>
-          <TerminalScreen absorbedIds={new Set(PRODUCTS.map(p => p.id))} />
-        </TerminalImage>
+        <TerminalWithScreen activeState={6} time={time} scale={0.78} />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, width: '100%' }}>
           {PRODUCTS.map(p => (
             <div key={p.id} style={{ ...S.card, borderRadius: 14, padding: '11px 14px' }}>
@@ -354,17 +481,15 @@ export default function PayPOSHero() {
           ))}
         </svg>
 
+        {/* Terminal centered on the orbital anchor */}
         <div style={{
           position: 'absolute',
-          left: -THW, top: -TH / 2,
-          width: TW, height: TH,
+          left: -THW, top: '-50%',
+          transform: 'translateY(-50%)',
+          width: TERMINAL_WIDTH,
         }}>
-          <div ref={terminalRef} style={{ willChange: 'transform', position: 'relative', zIndex: 6, width: '100%', height: '100%' }}>
-            <div style={S.glowRing} />
-            <TerminalImage>
-              <TerminalScreen absorbedIds={absorbedIds} />
-              <div ref={pulseRef} style={S.screenPulse} />
-            </TerminalImage>
+          <div ref={terminalRef} style={{ willChange: 'transform', position: 'relative', zIndex: 6 }}>
+            <TerminalInner activeState={activeState} time={time} intense={intense} pulseRef={pulseRef} />
           </div>
         </div>
 
@@ -391,16 +516,72 @@ export default function PayPOSHero() {
   );
 }
 
-/* ── Terminal image cropped to hide the smartphone ── */
-function TerminalImage({ children }) {
+/* ── Terminal image (cropped) + screen overlay ── */
+function TerminalInner({ activeState, time, intense, pulseRef }) {
   return (
-    <div style={S.terminalCrop}>
-      <img
-        src={`${import.meta.env.BASE_URL}devices6.png`}
-        alt="PayPOS Terminal"
-        style={S.terminalImg}
-      />
-      {children}
+    <div style={{ position: 'relative', width: TERMINAL_WIDTH }}>
+      {/* Cropped image mask */}
+      <div style={{
+        position: 'relative',
+        width: TERMINAL_WIDTH,
+        overflow: 'hidden',
+        zIndex: 1,
+      }}>
+        <img
+          src={`${import.meta.env.BASE_URL}devices6.png`}
+          alt="PayPOS Terminal"
+          style={{
+            width: IMG_DISPLAY_WIDTH,
+            marginLeft: IMG_OFFSET_X,
+            display: 'block',
+          }}
+        />
+      </div>
+
+      {/* Fake screen overlay */}
+      <div style={{
+        position: 'absolute',
+        top:    SCREEN_TOP,
+        left:   SCREEN_LEFT,
+        width:  SCREEN_WIDTH,
+        height: SCREEN_HEIGHT,
+        borderRadius: SCREEN_RADIUS,
+        overflow: 'hidden',
+        background: '#0d1b3e',
+        zIndex: 10,
+        boxShadow: intense
+          ? '0 0 0 1px rgba(0,212,255,0.5), 0 0 40px 6px rgba(0,212,255,0.35), inset 0 0 12px rgba(0,212,255,0.15)'
+          : 'inset 0 0 8px rgba(0,0,0,0.4)',
+        transition: 'box-shadow 0.6s ease',
+      }}>
+        <ScreenContent state={activeState} time={time} />
+        {/* Flash overlay — remounts on state change to re-trigger the CSS animation */}
+        <div
+          key={activeState}
+          className="pp-flash"
+          style={{
+            background: activeState === 0
+              ? 'rgba(255,255,255,0.6)'
+              : PRODUCTS[Math.min(activeState - 1, PRODUCTS.length - 1)].color,
+          }}
+        />
+        <div ref={pulseRef} style={S.screenPulse} />
+      </div>
+    </div>
+  );
+}
+
+/* Mobile entry — used by mobile branch */
+function TerminalWithScreen({ activeState, time, scale = 1 }) {
+  const intense = activeState === 6;
+  return (
+    <div style={{
+      position: 'relative',
+      width: TERMINAL_WIDTH,
+      transform: `scale(${scale})`,
+      transformOrigin: 'center top',
+    }}>
+      <TerminalInner activeState={activeState} time={time} intense={intense} pulseRef={{ current: null }} />
     </div>
   );
 }
@@ -419,15 +600,31 @@ function GlobalStyles() {
         from { opacity: 0; transform: translateY(10px); }
         to   { opacity: 1; transform: translateY(0); }
       }
-      @keyframes appPopIn {
-        from { opacity: 0; transform: scale(0.5); }
-        to   { opacity: 1; transform: scale(1); }
-      }
-      @keyframes scanLine {
+      @keyframes pp-scanline {
         0%   { transform: translateX(-100%); }
         100% { transform: translateX(266%); }
       }
+      @keyframes pp-flash {
+        0%   { opacity: 0; }
+        25%  { opacity: 0.35; }
+        100% { opacity: 0; }
+      }
+      @keyframes pp-finale-pulse {
+        0%, 100% { transform: scale(1); }
+        50%      { transform: scale(1.05); }
+      }
+
       .pp-eyebrow { animation: eyebrowIn 0.6s ease both; }
+      .pp-flash {
+        position: absolute; inset: 0;
+        pointer-events: none;
+        opacity: 0;
+        animation: pp-flash 0.5s ease forwards;
+        mix-blend-mode: screen;
+      }
+      .pp-state6 .pp-cell {
+        animation: pp-finale-pulse 0.5s ease 0.2s;
+      }
     `}</style>
   );
 }
@@ -486,123 +683,15 @@ const S = {
     transformOrigin: 'center center',
     zIndex: 3,
   },
-  glowRing: {
-    position: 'absolute',
-    top: '50%', left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: TW * 0.9, height: TW * 0.9, borderRadius: '50%',
-    boxShadow: '0 0 80px 20px rgba(0,150,255,0.20)',
-    pointerEvents: 'none', zIndex: 0,
-  },
   svgLines: {
     position: 'absolute', left: 0, top: 0,
     pointerEvents: 'none', zIndex: 3,
   },
-
-  /* Terminal image crop */
-  terminalCrop: {
-    position: 'relative',
-    width: TW, height: TH,
-    overflow: 'hidden',
-    zIndex: 2,
-  },
-  terminalImg: {
-    position: 'absolute',
-    width: IMG_W,
-    height: 'auto',
-    left: IMG_MARGIN_LEFT,
-    top: IMG_MARGIN_TOP,
-    display: 'block',
-    pointerEvents: 'none',
-    userSelect: 'none',
-  },
-
-  /* Fake home screen — sits over the terminal's printed screen */
-  screen: {
-    position: 'absolute',
-    left: SCREEN_LEFT, top: SCREEN_TOP,
-    width: SCREEN_WIDTH, height: SCREEN_HEIGHT,
-    borderRadius: SCREEN_RADIUS,
-    background: 'linear-gradient(180deg, #0d1b3e 0%, #0a1628 100%)',
-    overflow: 'hidden',
-    zIndex: 5,
-    display: 'flex', flexDirection: 'column',
-    boxShadow: 'inset 0 0 8px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,212,255,0.15)',
-  },
-  statusBar: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '5px 10px 4px',
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 8, fontWeight: 600, letterSpacing: '0.06em',
-  },
-  screenHeader: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '3px 10px 5px',
-    color: 'rgba(255,255,255,0.55)',
-    fontSize: 7, fontWeight: 700, letterSpacing: '0.18em',
-    borderBottom: '1px solid rgba(255,255,255,0.06)',
-  },
-  screenIdle: {
-    flex: 1,
-    display: 'flex', flexDirection: 'column',
-    alignItems: 'center', justifyContent: 'center',
-    gap: 6, paddingBottom: 16,
-  },
-  screenLogo: {
-    color: '#fff', fontSize: 16, fontWeight: 700,
-    letterSpacing: '0.18em',
-  },
-  screenTime: {
-    color: 'rgba(255,255,255,0.4)', fontSize: 10,
-    letterSpacing: '0.06em',
-  },
-  scanLineWrap: {
-    position: 'absolute',
-    bottom: 8, left: 0, right: 0,
-    height: 2, overflow: 'hidden',
-  },
-  scanLine: {
-    position: 'absolute', top: 0, left: 0,
-    height: '100%', width: '60%',
-    background: 'linear-gradient(90deg, transparent, #00d4ff 50%, transparent)',
-    animation: 'scanLine 2.4s linear infinite',
-  },
-  appGrid: {
-    flex: 1,
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gridTemplateRows: '1fr 1fr 1fr',
-    gap: 5,
-    padding: 8,
-  },
-  appCell: {
-    display: 'flex',
-    alignItems: 'center', justifyContent: 'center',
-    minHeight: 0,
-  },
-  appIconBox: {
-    width: 30, height: 30,
-    borderRadius: 7,
-    border: '1px solid',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    animation: 'appPopIn 0.35s cubic-bezier(0.175,0.885,0.32,1.275) both',
-  },
-  appPlaceholder: {
-    width: 30, height: 30,
-    borderRadius: 7,
-    background: 'rgba(255,255,255,0.03)',
-    border: '1px dashed rgba(255,255,255,0.08)',
-  },
   screenPulse: {
-    position: 'absolute',
-    left: SCREEN_LEFT, top: SCREEN_TOP,
-    width: SCREEN_WIDTH, height: SCREEN_HEIGHT,
-    borderRadius: SCREEN_RADIUS,
+    position: 'absolute', inset: 0,
     background: 'radial-gradient(circle at 50% 45%, rgba(0,212,255,0.55) 0%, rgba(0,100,255,0.25) 50%, transparent 80%)',
     opacity: 0, pointerEvents: 'none', zIndex: 6,
-    mixBlendMode: 'screen',
   },
-
   card: {
     display: 'flex', alignItems: 'center', gap: 12,
     background:          'rgba(255,255,255,0.04)',
