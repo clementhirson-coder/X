@@ -28,12 +28,12 @@ const SCREEN_PERIM = 1054;
 const THW = TERMINAL_WIDTH / 2;
 
 const PRODUCTS = [
-  { id: 'paybylink', label: 'PayByLink',     short: 'PAY-BY-LINK', color: '#00d4ff', ox: -280, oy:  -80 },
-  { id: 'bnpl',      label: 'BNPL & Credit', short: 'BNPL',        color: '#a855f7', ox:  220, oy:  -60 },
-  { id: 'wero',      label: 'Wero',          short: 'WERO',        color: '#6366f1', ox: -300, oy:   60 },
-  { id: 'noshow',    label: 'NoShow',        short: 'NOSHOW',      color: '#10b981', ox:  240, oy:   80 },
-  { id: 'crypto',    label: 'Crypto',        short: 'CRYPTO',      color: '#f7931a', ox: -220, oy:  180 },
-  { id: 'a2a',       label: 'A2A & Wallets', short: 'A2A',         color: '#3b82f6', ox:  200, oy:  160 },
+  { id: 'paybylink', label: 'PayByLink',     short: 'PAY-BY-LINK', color: '#00d4ff', ox: -520, oy: -120 },
+  { id: 'bnpl',      label: 'BNPL & Credit', short: 'BNPL',        color: '#a855f7', ox:  300, oy: -120 },
+  { id: 'wero',      label: 'Wero',          short: 'WERO',        color: '#6366f1', ox: -520, oy:    0 },
+  { id: 'noshow',    label: 'NoShow',        short: 'NOSHOW',      color: '#10b981', ox:  300, oy:    0 },
+  { id: 'crypto',    label: 'Crypto',        short: 'CRYPTO',      color: '#f7931a', ox: -520, oy:  120 },
+  { id: 'a2a',       label: 'A2A & Wallets', short: 'A2A',         color: '#3b82f6', ox:  300, oy:  120 },
 ];
 
 const PARTICLES = [
@@ -326,6 +326,7 @@ export default function PayPOSHero() {
   const glowRef     = useRef(null);
   const pulseRef    = useRef(null);
   const subtitleRef = useRef(null);
+  const ctaRef      = useRef(null);
   const cardRefs    = useRef([]);
   const absorbedRef = useRef(new Set());
 
@@ -404,6 +405,13 @@ export default function PayPOSHero() {
           { opacity: 1, y: 0, duration: 0.5 },
           PRODUCTS.length * STEP + 0.2
         );
+
+        tl.fromTo(
+          ctaRef.current,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.4 },
+          PRODUCTS.length * STEP + 0.7
+        );
       }, section);
     }, 150);
 
@@ -424,6 +432,9 @@ export default function PayPOSHero() {
           <p style={S.subtitle}>
             PayPOS centralise tous vos moyens de paiement en un seul terminal Android.
           </p>
+          <button style={{ ...S.ctaBtn, alignSelf: 'center' }} className="pp-cta-btn">
+            Découvrir PayPOS →
+          </button>
         </div>
         <TerminalWithScreen activeState={6} time={time} scale={0.78} />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, width: '100%' }}>
@@ -446,6 +457,22 @@ export default function PayPOSHero() {
 
       <div style={S.atmo1} />
       <div style={S.atmo2} />
+      <div style={S.atmo3} />
+
+      <svg
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }}
+        overflow="visible"
+      >
+        <defs>
+          <style>{`@keyframes h1LineFlow { to { stroke-dashoffset: -27; } }`}</style>
+        </defs>
+        <line x1="36%" y1="45%" x2="65%" y2="50%"
+          stroke="rgba(0,212,255,0.08)" strokeWidth="1" strokeDasharray="3 6"
+          style={{ animation: 'h1LineFlow 3s linear infinite' }} />
+        <line x1="36%" y1="55%" x2="65%" y2="50%"
+          stroke="rgba(0,212,255,0.08)" strokeWidth="1" strokeDasharray="3 6"
+          style={{ animation: 'h1LineFlow 3s linear infinite 1.5s' }} />
+      </svg>
 
       {PARTICLES.map(p => (
         <div
@@ -469,9 +496,22 @@ export default function PayPOSHero() {
           <span style={S.gradientH1}>One Terminal.</span>
           <br />Every Payment.
         </h1>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          {PRODUCTS.map((_, i) => (
+            <div key={i} style={{
+              width: 6, height: 6, borderRadius: '50%',
+              background: activeState > i ? '#00d4ff' : 'rgba(255,255,255,0.2)',
+              boxShadow: activeState > i ? '0 0 8px #00d4ff' : 'none',
+              transition: 'background 0.3s ease, box-shadow 0.3s ease',
+            }} />
+          ))}
+        </div>
         <p ref={subtitleRef} style={{ ...S.subtitle, opacity: 0 }}>
           PayPOS centralise tous vos moyens de paiement en un seul terminal Android.
         </p>
+        <button ref={ctaRef} style={{ ...S.ctaBtn, opacity: 0 }} className="pp-cta-btn">
+          Découvrir PayPOS →
+        </button>
       </div>
 
       {/* Orbital zone — zero-size anchor at terminal center */}
@@ -593,6 +633,18 @@ function TerminalInner({ activeState, time, intense, pulseRef }) {
         pointerEvents: 'none',
         zIndex: 0,
       }} />
+      {/* Deep blue box-shadow glow */}
+      <div style={{
+        position: 'absolute',
+        left: '50%', top: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 300, height: 300,
+        borderRadius: '50%',
+        background: 'transparent',
+        boxShadow: '0 0 120px 40px rgba(0, 100, 255, 0.15)',
+        pointerEvents: 'none',
+        zIndex: 0,
+      }} />
       <img
         src={`${import.meta.env.BASE_URL}${TERMINAL_IMG}`}
         alt="PayPOS Terminal"
@@ -690,9 +742,18 @@ function GlobalStyles() {
       }
       @keyframes pp-dot-pulse {
         0%, 100% { opacity: 1; transform: scale(1); }
-        50%      { opacity: 0.4; transform: scale(0.7); }      }
+        50%      { opacity: 0.4; transform: scale(0.7); }
+      }
+      @keyframes atmoBreath {
+        0%, 100% { opacity: 0.8; }
+        50%       { opacity: 1; }
+      }
 
       .pp-eyebrow { animation: eyebrowIn 0.6s ease both; }
+      .pp-cta-btn:hover {
+        transform: scale(1.03);
+        box-shadow: 0 0 30px rgba(0,212,255,0.4);
+      }
       .pp-flash {
         position: absolute; inset: 0;
         pointer-events: none;
@@ -750,7 +811,7 @@ const S = {
     backgroundClip: 'text',
   },
   subtitle: {
-    color: 'rgba(255,255,255,0.6)', fontSize: 17, lineHeight: 1.65, maxWidth: 400,
+    color: 'rgba(255,255,255,0.55)', fontSize: 15, lineHeight: 1.6, maxWidth: 380,
   },
   glowAtmo: {
     position: 'absolute',
@@ -764,6 +825,21 @@ const S = {
   svgLines: {
     position: 'absolute', left: 0, top: 0,
     pointerEvents: 'none', zIndex: 3,
+  },
+  atmo3: {
+    position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
+    background: 'radial-gradient(ellipse at 65% 50%, rgba(0,80,255,0.12) 0%, transparent 60%)',
+    animation: 'atmoBreath 4s ease-in-out infinite',
+  },
+  ctaBtn: {
+    display: 'inline-block',
+    background: '#00d4ff', color: '#000', fontWeight: 700,
+    borderRadius: 100, padding: '14px 28px', border: 'none',
+    fontSize: 15, letterSpacing: '0.02em',
+    cursor: 'pointer', fontFamily: 'Manrope, sans-serif',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    willChange: 'transform',
+    alignSelf: 'flex-start',
   },
   screenPulse: {
     position: 'absolute', inset: 0,
