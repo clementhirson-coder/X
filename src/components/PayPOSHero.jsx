@@ -11,16 +11,17 @@ gsap.registerPlugin(ScrollTrigger);
    ───────────────────────────────────────────────────────────── */
 const TW              = 360;     // terminal container width (display px)
 const TH              = 620;     // terminal container height
-const IMG_W           = 603;     // image rendered width (scaled from 1290)
-const IMG_MARGIN_LEFT = -215;    // shift left to hide the smartphone
+const IMG_W           = 500;     // image rendered width (scaled from 1290)
+const IMG_MARGIN_LEFT = -178;    // shift left to hide the smartphone
 const IMG_MARGIN_TOP  = -30;     // vertical adjustment
 
-/* Fake Android screen overlay — positioned over the terminal's actual screen */
-const SCREEN_LEFT     = 67;
-const SCREEN_TOP      = 64;
-const SCREEN_WIDTH    = 247;
-const SCREEN_HEIGHT   = 495;
-const SCREEN_RADIUS   = 22;
+/* Fake Android screen overlay — positioned over the terminal's actual screen.
+   Adjust these 5 if the screen doesn't sit exactly on the terminal's display. */
+const SCREEN_LEFT     = 57;
+const SCREEN_TOP      = 55;
+const SCREEN_WIDTH    = 205;
+const SCREEN_HEIGHT   = 412;
+const SCREEN_RADIUS   = 16;
 
 const THW = TW / 2;
 
@@ -112,18 +113,62 @@ function ProductIcon({ id, size = 24, color }) {
   }
 }
 
-/* ── Absorbed icons overlay — positioned inside the terminal's screen.
-   Simple flex-wrap of small color-tinted tiles. No fake Android UI, just
-   the icons that appeared as products got absorbed by scroll. ── */
+/* ── Fake home screen — replaces the printed screen of the terminal with
+   our own UI: PAYPOS branding + clock when empty, progressive app grid
+   as products get absorbed by scroll. ── */
 function TerminalScreen({ absorbedIds }) {
-  if (absorbedIds.size === 0) return null;
+  const count = absorbedIds.size;
+  const time  = '09:00';
   return (
-    <div style={S.absorbedOverlay}>
-      {PRODUCTS.filter(p => absorbedIds.has(p.id)).map(p => (
-        <div key={p.id} style={{ ...S.absorbedTile, background: `${p.color}26`, borderColor: `${p.color}55` }}>
-          <ProductIcon id={p.id} size={18} />
+    <div style={S.screen}>
+      {/* Status bar */}
+      <div style={S.statusBar}>
+        <svg width="9" height="9" viewBox="0 0 12 12" fill="none">
+          <path d="M1 4.2a8 8 0 0110 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+          <path d="M2.7 6.6a5 5 0 016.6 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+          <circle cx="6" cy="9.5" r="0.6" fill="currentColor" />
+        </svg>
+        <span>{time}</span>
+        <svg width="12" height="7" viewBox="0 0 16 9" fill="none">
+          <rect x="0.5" y="0.5" width="12" height="8" rx="1.5" stroke="currentColor" />
+          <rect x="2" y="2" width="8" height="5" fill="currentColor" />
+          <rect x="13" y="3" width="1.6" height="3" fill="currentColor" />
+        </svg>
+      </div>
+
+      {count === 0 ? (
+        /* Idle home screen — PAYPOS branding */
+        <div style={S.screenIdle}>
+          <div style={S.screenLogo}>PAYPOS</div>
+          <div style={S.screenTime}>{time}</div>
+          <div style={S.scanLineWrap}>
+            <div style={S.scanLine} />
+          </div>
         </div>
-      ))}
+      ) : (
+        <>
+          <div style={S.screenHeader}>
+            <span>PAYPOS</span>
+            <span style={{ color: '#00d4ff' }}>{count}/6</span>
+          </div>
+          <div style={S.appGrid}>
+            {PRODUCTS.map(p => {
+              const active = absorbedIds.has(p.id);
+              return (
+                <div key={p.id} style={S.appCell}>
+                  {active ? (
+                    <div style={{ ...S.appIconBox, background: `${p.color}26`, borderColor: `${p.color}55` }}>
+                      <ProductIcon id={p.id} size={16} />
+                    </div>
+                  ) : (
+                    <div style={S.appPlaceholder} />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -378,8 +423,11 @@ function GlobalStyles() {
         from { opacity: 0; transform: scale(0.5); }
         to   { opacity: 1; transform: scale(1); }
       }
+      @keyframes scanLine {
+        0%   { transform: translateX(-100%); }
+        100% { transform: translateX(266%); }
+      }
       .pp-eyebrow { animation: eyebrowIn 0.6s ease both; }
-      .pp-app-in  { animation: appPopIn 0.35s cubic-bezier(0.175,0.885,0.32,1.275) both; }
     `}</style>
   );
 }
@@ -469,25 +517,81 @@ const S = {
     userSelect: 'none',
   },
 
-  /* Absorbed icons overlay — positioned over the terminal's screen */
-  absorbedOverlay: {
+  /* Fake home screen — sits over the terminal's printed screen */
+  screen: {
     position: 'absolute',
     left: SCREEN_LEFT, top: SCREEN_TOP,
     width: SCREEN_WIDTH, height: SCREEN_HEIGHT,
-    display: 'flex', flexWrap: 'wrap',
-    alignItems: 'center', justifyContent: 'center',
-    gap: 8, padding: 12,
+    borderRadius: SCREEN_RADIUS,
+    background: 'linear-gradient(180deg, #0d1b3e 0%, #0a1628 100%)',
+    overflow: 'hidden',
     zIndex: 5,
-    pointerEvents: 'none',
+    display: 'flex', flexDirection: 'column',
+    boxShadow: 'inset 0 0 8px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,212,255,0.15)',
   },
-  absorbedTile: {
-    width: 36, height: 36,
-    borderRadius: 9,
+  statusBar: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    padding: '5px 10px 4px',
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 8, fontWeight: 600, letterSpacing: '0.06em',
+  },
+  screenHeader: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    padding: '3px 10px 5px',
+    color: 'rgba(255,255,255,0.55)',
+    fontSize: 7, fontWeight: 700, letterSpacing: '0.18em',
+    borderBottom: '1px solid rgba(255,255,255,0.06)',
+  },
+  screenIdle: {
+    flex: 1,
+    display: 'flex', flexDirection: 'column',
+    alignItems: 'center', justifyContent: 'center',
+    gap: 6, paddingBottom: 16,
+  },
+  screenLogo: {
+    color: '#fff', fontSize: 16, fontWeight: 700,
+    letterSpacing: '0.18em',
+  },
+  screenTime: {
+    color: 'rgba(255,255,255,0.4)', fontSize: 10,
+    letterSpacing: '0.06em',
+  },
+  scanLineWrap: {
+    position: 'absolute',
+    bottom: 8, left: 0, right: 0,
+    height: 2, overflow: 'hidden',
+  },
+  scanLine: {
+    position: 'absolute', top: 0, left: 0,
+    height: '100%', width: '60%',
+    background: 'linear-gradient(90deg, transparent, #00d4ff 50%, transparent)',
+    animation: 'scanLine 2.4s linear infinite',
+  },
+  appGrid: {
+    flex: 1,
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gridTemplateRows: '1fr 1fr 1fr',
+    gap: 5,
+    padding: 8,
+  },
+  appCell: {
+    display: 'flex',
+    alignItems: 'center', justifyContent: 'center',
+    minHeight: 0,
+  },
+  appIconBox: {
+    width: 30, height: 30,
+    borderRadius: 7,
     border: '1px solid',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     animation: 'appPopIn 0.35s cubic-bezier(0.175,0.885,0.32,1.275) both',
-    backdropFilter: 'blur(4px)',
-    WebkitBackdropFilter: 'blur(4px)',
+  },
+  appPlaceholder: {
+    width: 30, height: 30,
+    borderRadius: 7,
+    background: 'rgba(255,255,255,0.03)',
+    border: '1px dashed rgba(255,255,255,0.08)',
   },
   screenPulse: {
     position: 'absolute',
