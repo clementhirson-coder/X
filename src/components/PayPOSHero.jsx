@@ -39,6 +39,7 @@ export default function PayPOSHero() {
   const sectionRef  = useRef(null);
   const terminalRef = useRef(null);
   const glowRef     = useRef(null);
+  const pulseRef    = useRef(null);
   const subtitleRef = useRef(null);
   const cardRefs    = useRef([]);
   const absorbedRef = useRef(new Set());
@@ -90,11 +91,27 @@ export default function PayPOSHero() {
           },
         });
 
+        const pulse = pulseRef.current;
+
         PRODUCTS.forEach((p, i) => {
           const card = cardRefs.current[i];
           if (!card) return;
           const at = i * STEP;
+
+          // Card flies into terminal
           tl.to(card, { x: -p.ox, y: -p.oy, scale: 0, opacity: 0, duration: 1, ease: 'power2.in' }, at);
+
+          // Impact: terminal squash-and-stretch pulse
+          tl.to(terminal, { scaleX: 1.06, scaleY: 0.97, duration: 0.07, ease: 'power3.out', transformOrigin: 'center bottom' }, at + 0.85);
+          tl.to(terminal, { scaleX: 1.00, scaleY: 1.00, duration: 0.45, ease: 'elastic.out(1.1, 0.4)', transformOrigin: 'center bottom' }, at + 0.92);
+
+          // Screen flash
+          if (pulse) {
+            tl.to(pulse, { opacity: 0.7, duration: 0.06, ease: 'power2.out' }, at + 0.85);
+            tl.to(pulse, { opacity: 0,   duration: 0.40, ease: 'power2.in'  }, at + 0.91);
+          }
+
+          // Atmosphere glow burst
           tl.to(glow, { opacity: 0.55, scale: 1.7, duration: 0.12, ease: 'power2.out' }, at + 0.85);
           tl.to(glow, { opacity: 0.15, scale: 1.0, duration: 0.15, ease: 'power2.in'  }, at + 0.97);
         });
@@ -221,6 +238,8 @@ export default function PayPOSHero() {
           <div ref={terminalRef} style={{ willChange: 'transform', position: 'relative', zIndex: 6 }}>
             {/* Glow ring inside terminal — floats with it */}
             <div style={S.glowRing} />
+            {/* Screen flash overlay — lit up by GSAP on each absorption */}
+            <div ref={pulseRef} style={S.screenPulse} />
             <img
               src={`${import.meta.env.BASE_URL}devices6.png`}
               alt="PayPOS Terminal"
@@ -370,6 +389,13 @@ const S = {
     opacity: 0.15, pointerEvents: 'none',
     transformOrigin: 'center center',
     zIndex: 3,
+  },
+  screenPulse: {
+    position: 'absolute',
+    top: '8%', left: '6%', right: '6%', bottom: '6%',
+    borderRadius: 20,
+    background: 'radial-gradient(circle at 50% 45%, rgba(0,212,255,0.55) 0%, rgba(0,100,255,0.25) 50%, transparent 80%)',
+    opacity: 0, pointerEvents: 'none', zIndex: 5,
   },
   svgLines: {
     position: 'absolute', left: 0, top: 0,
