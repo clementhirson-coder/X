@@ -4,15 +4,18 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const TW   = 391;      // terminal width = 340 * 1.15
-const THW  = TW / 2;  // half terminal width = 195.5
+const TW  = 391;      // terminal width = 340 × 1.15
+const THW = TW / 2;  // 195.5
+
+/* Resolve asset path correctly under the /X/ GitHub Pages sub-path */
+const IMG = `${import.meta.env.BASE_URL}devices6.png`;
 
 const PRODUCTS = [
   { id: 'paybylink', label: 'PayByLink',     icon: '🔗', ox: -280, oy:  -80 },
   { id: 'bnpl',      label: 'BNPL & Credit', icon: '💳', ox:  220, oy:  -60 },
-  { id: 'wero',      label: 'Wero',           icon: '⚡',       ox: -300, oy:   60 },
-  { id: 'noshow',    label: 'NoShow',         icon: '🛡️', ox: 240, oy: 80 },
-  { id: 'crypto',    label: 'Crypto',         icon: '₿',       ox: -220, oy:  180 },
+  { id: 'wero',      label: 'Wero',           icon: '⚡', ox: -300, oy:   60 },
+  { id: 'noshow',    label: 'NoShow',         icon: '🛡️', ox:  240, oy:   80 },
+  { id: 'crypto',    label: 'Crypto',         icon: '₿',  ox: -220, oy:  180 },
   { id: 'a2a',       label: 'A2A & Wallets',  icon: '🏦', ox:  200, oy:  160 },
 ];
 
@@ -34,6 +37,64 @@ const PARTICLES = [
 const STEP      = 1.2;
 const TOTAL     = PRODUCTS.length * STEP + 1;
 const SCROLL_PX = 140;
+
+/* ── Shared sub-components ───────────────────────────────────────────── */
+
+function GlobalStyles() {
+  return (
+    <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap');
+      @keyframes particleFloat {
+        0%, 100% { transform: translateY(0px); }
+        50%       { transform: translateY(-9px); }
+      }
+      @keyframes eyebrowIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes popIn {
+        from { opacity: 0; transform: scale(0.4); }
+        to   { opacity: 1; transform: scale(1); }
+      }
+      .dash { animation: dashFlow 3s linear infinite; }
+      @keyframes dashFlow { to { stroke-dashoffset: -36; } }
+      .pp-eyebrow { animation: eyebrowIn 0.6s ease both; }
+    `}</style>
+  );
+}
+
+function Card({ product, innerRef, style = {} }) {
+  return (
+    <div ref={innerRef} style={{ ...S.card, ...style }}>
+      <div style={S.iconBox}>
+        <span style={{ fontSize: 18, lineHeight: 1 }}>{product.icon}</span>
+      </div>
+      <span style={S.cardLabel}>{product.label}</span>
+    </div>
+  );
+}
+
+function TerminalImage({ absorbedIds }) {
+  return (
+    <div ref={undefined} style={{ willChange: 'transform', position: 'relative', zIndex: 6 }}>
+      <div style={S.glowRing} />
+      <img
+        src={IMG}
+        alt="PayPOS Terminal"
+        style={{ width: '100%', height: 'auto', mixBlendMode: 'screen', display: 'block', position: 'relative', zIndex: 1 }}
+      />
+      {absorbedIds.size > 0 && (
+        <div style={S.absorbedOverlay}>
+          {PRODUCTS.filter(p => absorbedIds.has(p.id)).map(p => (
+            <span key={p.id} style={S.absorbedIcon}>{p.icon}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Main component ──────────────────────────────────────────────────── */
 
 export default function PayPOSHero() {
   const sectionRef  = useRef(null);
@@ -65,17 +126,15 @@ export default function PayPOSHero() {
       if (!section || !terminal || !glow) return;
 
       ctx = gsap.context(() => {
-        /* Floating terminal */
         gsap.to(terminal, { y: -18, duration: 3, ease: 'sine.inOut', yoyo: true, repeat: -1 });
 
-        /* Scroll timeline */
         const tl = gsap.timeline({
           scrollTrigger: {
-            trigger: section,
-            pin:     true,
-            start:   'top top',
-            end:     `+=${PRODUCTS.length * SCROLL_PX}`,
-            scrub:   1,
+            trigger:       section,
+            pin:           true,
+            start:         'top top',
+            end:           `+=${PRODUCTS.length * SCROLL_PX}`,
+            scrub:         1,
             anticipatePin: 1,
             onUpdate: (self) => {
               let changed = false;
@@ -111,57 +170,52 @@ export default function PayPOSHero() {
     return () => { clearTimeout(timer); ctx?.revert(); };
   }, [isMobile]);
 
-  /* ─────────────────── Mobile layout ─────────────────── */
+  /* ── Mobile layout ── */
   if (isMobile) {
     return (
-      <section style={S.root}>
-        <FontImport />
-        <div style={S.mobileInner}>
-          <div style={S.mobileText}>
-            <Eyebrow />
-            <h1 style={S.h1Mobile}>One Terminal.<br />Every Payment.</h1>
-            <p style={S.subtitle}>
-              PayPOS centralise tous vos moyens de paiement en un seul terminal Android.
-            </p>
-          </div>
-          <img src={`${import.meta.env.BASE_URL}devices6.png`} alt="PayPOS Terminal" style={S.terminalImgMobile} />
-          <div style={S.mobileGrid}>
-            {PRODUCTS.map(p => (
-              <div key={p.id} style={{ ...S.card, borderRadius: 12, padding: '12px 16px' }}>
-                <span style={{ fontSize: 20 }}>{p.icon}</span>
-                <span style={{ ...S.cardLabel, fontSize: 12 }}>{p.label}</span>
-              </div>
-            ))}
-          </div>
+      <section style={{ ...S.root, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32, padding: '80px 24px' }}>
+        <GlobalStyles />
+        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <span style={S.eyebrow} className="pp-eyebrow">Next-Gen Payment Terminal</span>
+          <div style={S.eyebrowLine} />
+          <h1 style={{ ...S.h1, fontSize: 'clamp(36px,10vw,56px)' }}>
+            <span style={S.gradientH1}>One Terminal.</span><br />Every Payment.
+          </h1>
+          <p style={S.subtitle}>
+            PayPOS centralise tous vos moyens de paiement en un seul terminal Android.
+          </p>
+        </div>
+        <img src={IMG} alt="PayPOS Terminal" style={{ width: 240, mixBlendMode: 'screen' }} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, width: '100%' }}>
+          {PRODUCTS.map(p => (
+            <Card key={p.id} product={p} style={{ borderRadius: 14, padding: '11px 14px' }} />
+          ))}
         </div>
       </section>
     );
   }
 
+  /* ── Desktop layout ── */
   return (
     <section ref={sectionRef} style={S.root}>
       <GlobalStyles />
 
-      {/* Atmosphere layer 1 — large ellipse */}
+      {/* Atmosphere */}
       <div style={S.atmo1} />
-      {/* Atmosphere layer 2 — tight center glow */}
       <div style={S.atmo2} />
 
-      {/* Floating particles */}
+      {/* Particles */}
       {PARTICLES.map(p => (
-        <div
-          key={p.id}
-          style={{
-            position: 'absolute', left: p.l, top: p.t,
-            width: p.size, height: p.size, borderRadius: '50%',
-            background: '#fff', opacity: p.op,
-            animation: `particleFloat ${p.dur}s ease-in-out ${p.del}s infinite`,
-            pointerEvents: 'none', zIndex: 2,
-          }}
-        />
+        <div key={p.id} style={{
+          position: 'absolute', left: p.l, top: p.t,
+          width: p.size, height: p.size, borderRadius: '50%',
+          background: '#fff', opacity: p.op,
+          animation: `particleFloat ${p.dur}s ease-in-out ${p.del}s infinite`,
+          pointerEvents: 'none', zIndex: 2,
+        }} />
       ))}
 
-      {/* ── Left: headline ── */}
+      {/* Headline */}
       <div style={S.textBlock}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <span style={S.eyebrow} className="pp-eyebrow">Next-Gen Payment Terminal</span>
@@ -176,42 +230,18 @@ export default function PayPOSHero() {
         </p>
       </div>
 
-      {/* ── Orbital zone — zero-size anchor at terminal center ── */}
+      {/* Orbital zone — zero-size anchor at terminal center */}
       <div style={{
         position: 'absolute',
         right: `calc(13% + ${THW}px)`,
         top: '50%',
         width: 0, height: 0,
       }}>
+        {/* Glow — GSAP scale target, positioned via left/top (no CSS transform conflict) */}
+        <div ref={glowRef} style={S.glowAtmo} />
 
-      {/* Terminal positioning wrapper (CSS-only, no GSAP) */}
-      <div style={S.terminalWrapper}>
-        {/* GSAP-controlled inner div (floating animation) */}
-        <div ref={terminalRef} style={{ width: 340, willChange: 'transform', position: 'relative' }}>
-          <img
-            src={`${import.meta.env.BASE_URL}devices6.png`}
-            alt="PayPOS Terminal"
-            style={S.terminalImgDesktop}
-          />
-          {/* Icons absorbed into terminal screen */}
-          {absorbedIds.size > 0 && (
-            <div style={S.absorbedOverlay}>
-              {PRODUCTS.filter(p => absorbedIds.has(p.id)).map(p => (
-                <span key={p.id} style={S.absorbedIcon}>{p.icon}</span>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-        {/* SVG connecting lines from each card to terminal center */}
+        {/* SVG connecting lines */}
         <svg width="0" height="0" style={S.svgLines} overflow="visible">
-          <defs>
-            <style>{`
-              .dash { animation: dashFlow 3s linear infinite; }
-              @keyframes dashFlow { to { stroke-dashoffset: -36; } }
-            `}</style>
-          </defs>
           {PRODUCTS.map(p => (
             <line
               key={p.id}
@@ -224,23 +254,15 @@ export default function PayPOSHero() {
           ))}
         </svg>
 
-        {/* Terminal centering wrapper (translateY-50% only — GSAP on inner div) */}
-        <div style={{
-          position: 'absolute',
-          left: -THW, top: 0,
-          transform: 'translateY(-50%)',
-          width: TW,
-        }}>
-          {/* GSAP-controlled: floating animation */}
+        {/* Terminal */}
+        <div style={{ position: 'absolute', left: -THW, top: 0, transform: 'translateY(-50%)', width: TW }}>
           <div ref={terminalRef} style={{ willChange: 'transform', position: 'relative', zIndex: 6 }}>
-            {/* Glow ring inside terminal — floats with it */}
             <div style={S.glowRing} />
             <img
-              src="/devices6.png"
+              src={IMG}
               alt="PayPOS Terminal"
               style={{ width: '100%', height: 'auto', mixBlendMode: 'screen', display: 'block', position: 'relative', zIndex: 1 }}
             />
-            {/* Icons absorbed into terminal */}
             {absorbedIds.size > 0 && (
               <div style={S.absorbedOverlay}>
                 {PRODUCTS.filter(p => absorbedIds.has(p.id)).map(p => (
@@ -251,24 +273,18 @@ export default function PayPOSHero() {
           </div>
         </div>
 
-        {/* Cards at orbital positions */}
+        {/* Cards */}
         {PRODUCTS.map((p, i) => (
-          <div
-            key={p.id}
-            style={{
-              position: 'absolute',
-              left: p.ox, top: p.oy,
-              transform: 'translate(-50%, -50%)',
-              zIndex: 8,
-            }}
-          >
-            {/* inner div = GSAP target (no initial CSS transform) */}
-            <div ref={el => { cardRefs.current[i] = el; }} style={S.card}>
-              <div style={S.iconBox}>
-                <span style={{ fontSize: 18, lineHeight: 1 }}>{p.icon}</span>
-              </div>
-              <span style={S.cardLabel}>{p.label}</span>
-            </div>
+          <div key={p.id} style={{
+            position: 'absolute',
+            left: p.ox, top: p.oy,
+            transform: 'translate(-50%, -50%)',
+            zIndex: 8,
+          }}>
+            <Card
+              product={p}
+              innerRef={el => { cardRefs.current[i] = el; }}
+            />
           </div>
         ))}
       </div>
@@ -276,58 +292,7 @@ export default function PayPOSHero() {
   );
 }
 
-/* ── Mobile fallback ── */
-function MobileHero() {
-  return (
-    <section style={{ ...S.root, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32, padding: '80px 24px', overflow: 'visible' }}>
-      <GlobalStyles />
-      <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <span style={S.eyebrow} className="pp-eyebrow">Next-Gen Payment Terminal</span>
-        <div style={S.eyebrowLine} />
-        <h1 style={{ ...S.h1, fontSize: 'clamp(36px,10vw,56px)' }}>
-          <span style={S.gradientH1}>One Terminal.</span><br />Every Payment.
-        </h1>
-        <p style={S.subtitle}>
-          PayPOS centralise tous vos moyens de paiement en un seul terminal Android.
-        </p>
-      </div>
-      <img src="/devices6.png" alt="PayPOS Terminal" style={{ width: 240, mixBlendMode: 'screen' }} />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, width: '100%' }}>
-        {PRODUCTS.map(p => (
-          <div key={p.id} style={{ ...S.card, borderRadius: 14, padding: '11px 14px' }}>
-            <div style={{ ...S.iconBox, borderRadius: 8, padding: 6 }}>
-              <span style={{ fontSize: 16 }}>{p.icon}</span>
-            </div>
-            <span style={{ ...S.cardLabel, fontSize: 12 }}>{p.label}</span>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/* ── Styles ── */
-function GlobalStyles() {
-  return (
-    <style>{`
-      @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap');
-
-      @keyframes particleFloat {
-        0%, 100% { transform: translateY(0px); }
-        50%       { transform: translateY(-9px); }
-      }
-      @keyframes eyebrowIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to   { opacity: 1; transform: translateY(0); }
-      }
-      @keyframes popIn {
-        from { opacity: 0; transform: scale(0.4); }
-        to   { opacity: 1; transform: scale(1); }
-      }
-      .pp-eyebrow { animation: eyebrowIn 0.6s ease both; }
-    `}</style>
-  );
-}
+/* ── Style constants ─────────────────────────────────────────────────── */
 
 const S = {
   root: {
@@ -335,7 +300,9 @@ const S = {
     fontFamily: 'Manrope, sans-serif',
     position: 'relative',
     minHeight: '100vh',
-    overflow: 'hidden',
+    /* overflow:clip clips visually without creating a scroll container,
+       allowing GSAP ScrollTrigger to inject its pin spacer correctly */
+    overflow: 'clip',
   },
   atmo1: {
     position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
@@ -345,7 +312,6 @@ const S = {
     position: 'absolute', zIndex: 1, pointerEvents: 'none',
     width: 300, height: 300, borderRadius: '50%',
     background: 'radial-gradient(circle, rgba(0,180,255,0.20) 0%, transparent 70%)',
-    /* centered on terminal: right offset = 13% + HW - 150  */
     right: `calc(13% + ${THW - 150}px)`,
     top: 'calc(50% - 150px)',
   },
@@ -375,7 +341,6 @@ const S = {
   subtitle: {
     color: 'rgba(255,255,255,0.6)', fontSize: 17, lineHeight: 1.65, maxWidth: 400,
   },
-  /* Glow: positioned with left/top (no CSS transform) so GSAP scale has no conflict */
   glowAtmo: {
     position: 'absolute',
     width: 520, height: 520, left: -260, top: -260,

@@ -17,4 +17,7 @@ body {
   color: #f1f5f9;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Required for GSAP ScrollTrigger pin spacer to extend document height */
+  overflow-y: auto;
+  overflow-x: hidden;
 }
