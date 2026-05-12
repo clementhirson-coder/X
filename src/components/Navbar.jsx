@@ -55,7 +55,11 @@ export default function Navbar() {
         }}
       >
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center' }} data-cursor="hover">
+        <a
+          href="/"
+          data-cursor="hover"
+          style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}
+        >
           <span style={{ color: '#fff', fontWeight: 800, fontSize: 25, letterSpacing: '0.05em' }}>
             PAYPOS
           </span>
@@ -66,7 +70,7 @@ export default function Navbar() {
             boxShadow: '0 0 8px #00d4ff',
             marginLeft: 4, marginBottom: 8,
           }} />
-        </div>
+        </a>
 
         {/* Desktop nav links */}
         <div className="pp-nav-links" style={{ display: 'flex', gap: 50, alignItems: 'center' }}>
