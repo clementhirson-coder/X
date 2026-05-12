@@ -112,63 +112,18 @@ function ProductIcon({ id, size = 24, color }) {
   }
 }
 
-/* ── Fake Android screen with apps appearing as products get absorbed ── */
+/* ── Absorbed icons overlay — positioned inside the terminal's screen.
+   Simple flex-wrap of small color-tinted tiles. No fake Android UI, just
+   the icons that appeared as products got absorbed by scroll. ── */
 function TerminalScreen({ absorbedIds }) {
-  const count = absorbedIds.size;
+  if (absorbedIds.size === 0) return null;
   return (
-    <div style={S.screen}>
-      {/* Status bar */}
-      <div style={S.statusBar}>
-        <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
-          <path d="M1 4.2a8 8 0 0110 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-          <path d="M2.7 6.6a5 5 0 016.6 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-          <circle cx="6" cy="9.5" r="0.6" fill="currentColor" />
-        </svg>
-        <span>09:00</span>
-        <svg width="14" height="8" viewBox="0 0 16 9" fill="none">
-          <rect x="0.5" y="0.5" width="12" height="8" rx="1.5" stroke="currentColor" />
-          <rect x="2" y="2" width="8" height="5" fill="currentColor" />
-          <rect x="13" y="3" width="1.6" height="3" fill="currentColor" />
-        </svg>
-      </div>
-
-      {/* Header */}
-      <div style={S.screenHeader}>
-        <span>PAYPOS</span>
-        <span style={{ color: '#00d4ff' }}>{count}/6</span>
-      </div>
-
-      {/* App grid (2 cols × 3 rows) */}
-      <div style={S.appGrid}>
-        {PRODUCTS.map(p => {
-          const active = absorbedIds.has(p.id);
-          return (
-            <div key={p.id} style={{
-              ...S.appCell,
-              ...(active ? {} : S.appCellEmpty),
-            }}>
-              {active ? (
-                <>
-                  <div style={{ ...S.appIconBox, background: `${p.color}26`, borderColor: `${p.color}55` }}>
-                    <ProductIcon id={p.id} size={22} />
-                  </div>
-                  <span style={{ ...S.appLabel, color: p.color }}>{p.short}</span>
-                </>
-              ) : (
-                <div style={S.appPlaceholder} />
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Bottom hint */}
-      {count === 0 && (
-        <div style={S.screenHint}>Scroll pour activer les modules</div>
-      )}
-      {count === PRODUCTS.length && (
-        <div style={{ ...S.screenHint, color: '#00d4ff' }}>6 modules actifs</div>
-      )}
+    <div style={S.absorbedOverlay}>
+      {PRODUCTS.filter(p => absorbedIds.has(p.id)).map(p => (
+        <div key={p.id} style={{ ...S.absorbedTile, background: `${p.color}26`, borderColor: `${p.color}55` }}>
+          <ProductIcon id={p.id} size={18} />
+        </div>
+      ))}
     </div>
   );
 }
@@ -514,73 +469,25 @@ const S = {
     userSelect: 'none',
   },
 
-  /* Fake screen */
-  screen: {
+  /* Absorbed icons overlay — positioned over the terminal's screen */
+  absorbedOverlay: {
     position: 'absolute',
     left: SCREEN_LEFT, top: SCREEN_TOP,
     width: SCREEN_WIDTH, height: SCREEN_HEIGHT,
-    borderRadius: SCREEN_RADIUS,
-    background: 'linear-gradient(180deg, #0d1b3e 0%, #0a1628 100%)',
-    overflow: 'hidden',
-    zIndex: 5,
-    display: 'flex', flexDirection: 'column',
-    boxShadow: 'inset 0 0 12px rgba(0,0,0,0.4)',
-  },
-  statusBar: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '6px 10px',
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 9, fontWeight: 600, letterSpacing: '0.06em',
-  },
-  screenHeader: {
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    padding: '4px 12px 6px',
-    color: 'rgba(255,255,255,0.55)',
-    fontSize: 8, fontWeight: 700, letterSpacing: '0.18em',
-    borderBottom: '1px solid rgba(255,255,255,0.06)',
-  },
-  appGrid: {
-    flex: 1,
-    display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
-    gridTemplateRows: '1fr 1fr 1fr',
-    gap: 6,
-    padding: 10,
-  },
-  appCell: {
-    display: 'flex', flexDirection: 'column',
+    display: 'flex', flexWrap: 'wrap',
     alignItems: 'center', justifyContent: 'center',
-    gap: 4,
-    minHeight: 0,
-    animation: 'appPopIn 0.35s cubic-bezier(0.175,0.885,0.32,1.275) both',
+    gap: 8, padding: 12,
+    zIndex: 5,
+    pointerEvents: 'none',
   },
-  appCellEmpty: {
-    animation: 'none',
-  },
-  appIconBox: {
+  absorbedTile: {
     width: 36, height: 36,
     borderRadius: 9,
     border: '1px solid',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-  },
-  appLabel: {
-    fontSize: 7, fontWeight: 700,
-    letterSpacing: '0.1em',
-    textTransform: 'uppercase',
-  },
-  appPlaceholder: {
-    width: 36, height: 36,
-    borderRadius: 9,
-    background: 'rgba(255,255,255,0.04)',
-    border: '1px dashed rgba(255,255,255,0.08)',
-  },
-  screenHint: {
-    fontSize: 8, fontWeight: 600,
-    color: 'rgba(255,255,255,0.4)',
-    textAlign: 'center',
-    padding: '0 0 8px',
-    letterSpacing: '0.12em',
-    textTransform: 'uppercase',
+    animation: 'appPopIn 0.35s cubic-bezier(0.175,0.885,0.32,1.275) both',
+    backdropFilter: 'blur(4px)',
+    WebkitBackdropFilter: 'blur(4px)',
   },
   screenPulse: {
     position: 'absolute',
