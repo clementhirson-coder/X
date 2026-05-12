@@ -359,7 +359,7 @@ export default function PayPOSHero() {
       if (!section || !terminal || !glow) return;
 
       ctx = gsap.context(() => {
-        gsap.to(terminal, { y: -18, duration: 3, ease: 'sine.inOut', yoyo: true, repeat: -1 });
+        gsap.to(terminal, { y: -8, duration: 3, ease: 'sine.inOut', yoyo: true, repeat: -1 });
 
         const tl = gsap.timeline({
           scrollTrigger: {
@@ -546,6 +546,16 @@ export default function PayPOSHero() {
 function TerminalInner({ activeState, time, intense, pulseRef }) {
   return (
     <div style={{ position: 'relative', width: TERMINAL_WIDTH }}>
+      {/* Soft glow behind terminal */}
+      <div style={{
+        position: 'absolute',
+        left: '50%', top: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: '130%', height: '110%',
+        background: 'radial-gradient(ellipse at center, rgba(0,212,255,0.10) 0%, transparent 70%)',
+        pointerEvents: 'none',
+        zIndex: 0,
+      }} />
       <img
         src={`${import.meta.env.BASE_URL}${TERMINAL_IMG}`}
         alt="PayPOS Terminal"
@@ -602,6 +612,7 @@ function TerminalWithScreen({ activeState, time, scale = 1 }) {
       width: TERMINAL_WIDTH,
       transform: `scale(${scale})`,
       transformOrigin: 'center top',
+      animation: 'terminalFloat 3s ease-in-out infinite',
     }}>
       <TerminalInner activeState={activeState} time={time} intense={intense} pulseRef={{ current: null }} />
     </div>
@@ -617,6 +628,10 @@ function GlobalStyles() {
       @keyframes particleFloat {
         0%, 100% { transform: translateY(0px); }
         50%       { transform: translateY(-9px); }
+      }
+      @keyframes terminalFloat {
+        0%, 100% { transform: translateY(0px); }
+        50%       { transform: translateY(-8px); }
       }
       @keyframes eyebrowIn {
         from { opacity: 0; transform: translateY(10px); }
