@@ -236,7 +236,7 @@ export default function PayPOSHero() {
             {/* Glow ring inside terminal — floats with it */}
             <div style={S.glowRing} />
             <img
-              src="/devices6.png"
+              src={`${import.meta.env.BASE_URL}devices6.png`}
               alt="PayPOS Terminal"
               style={{ width: '100%', height: 'auto', mixBlendMode: 'screen', display: 'block', position: 'relative', zIndex: 1 }}
             />
@@ -291,7 +291,7 @@ function MobileHero() {
           PayPOS centralise tous vos moyens de paiement en un seul terminal Android.
         </p>
       </div>
-      <img src="/devices6.png" alt="PayPOS Terminal" style={{ width: 240, mixBlendMode: 'screen' }} />
+      <img src={`${import.meta.env.BASE_URL}devices6.png`} alt="PayPOS Terminal" style={{ width: 240, mixBlendMode: 'screen' }} />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, width: '100%' }}>
         {PRODUCTS.map(p => (
           <div key={p.id} style={{ ...S.card, borderRadius: 14, padding: '11px 14px' }}>
@@ -335,7 +335,7 @@ const S = {
     fontFamily: 'Manrope, sans-serif',
     position: 'relative',
     minHeight: '100vh',
-    overflow: 'hidden',
+    overflow: 'clip',
   },
   atmo1: {
     position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
