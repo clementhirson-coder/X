@@ -138,7 +138,7 @@ export default function PayPOSHero() {
               PayPOS centralise tous vos moyens de paiement en un seul terminal Android.
             </p>
           </div>
-          <img src="/devices6.png" alt="PayPOS Terminal" style={S.terminalImgMobile} />
+          <img src={`${import.meta.env.BASE_URL}devices6.png`} alt="PayPOS Terminal" style={S.terminalImgMobile} />
           <div style={S.mobileGrid}>
             {PRODUCTS.map(p => (
               <div key={p.id} style={{ ...S.card, borderRadius: 12, padding: '12px 16px' }}>
@@ -189,7 +189,7 @@ export default function PayPOSHero() {
         {/* GSAP-controlled inner div (floating animation) */}
         <div ref={terminalRef} style={{ width: 340, willChange: 'transform', position: 'relative' }}>
           <img
-            src="/devices6.png"
+            src={`${import.meta.env.BASE_URL}devices6.png`}
             alt="PayPOS Terminal"
             style={S.terminalImgDesktop}
           />
