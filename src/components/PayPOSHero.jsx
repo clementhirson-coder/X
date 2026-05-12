@@ -486,12 +486,14 @@ function TerminalWithScreen({ activeState, time, scale = 1 }) {
         zIndex: 0,
       }} />
 
-      {/* Cropped image mask */}
+      {/* Cropped image mask — mix-blend-mode on the outer div so the
+          terminal shape composites against the page background correctly */}
       <div style={{
         position: 'relative',
         width: TERMINAL_WIDTH,
         overflow: 'hidden',
         zIndex: 1,
+        mixBlendMode: 'screen',
       }}>
         <img
           src={`${import.meta.env.BASE_URL}devices6.png`}
@@ -500,7 +502,6 @@ function TerminalWithScreen({ activeState, time, scale = 1 }) {
             width: IMG_DISPLAY_WIDTH,
             marginLeft: IMG_OFFSET_X,
             display: 'block',
-            mixBlendMode: 'screen',
           }}
         />
       </div>
