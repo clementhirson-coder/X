@@ -28,12 +28,12 @@ const SCREEN_PERIM = 1254;
 const THW = TERMINAL_WIDTH / 2; // 285
 
 const PRODUCTS = [
-  { id: 'paybylink', label: 'PayByLink',     short: 'PAY-BY-LINK', color: '#00d4ff', ox: -390, oy: -120 },
-  { id: 'bnpl',      label: 'BNPL & Credit', short: 'BNPL',        color: '#a855f7', ox:  390, oy: -120 },
-  { id: 'wero',      label: 'Wero',          short: 'WERO',        color: '#6366f1', ox: -390, oy:    0 },
-  { id: 'noshow',    label: 'NoShow',        short: 'NOSHOW',      color: '#10b981', ox:  390, oy:    0 },
-  { id: 'crypto',    label: 'Crypto',        short: 'CRYPTO',      color: '#f7931a', ox: -390, oy:  120 },
-  { id: 'a2a',       label: 'A2A & Wallets', short: 'A2A',         color: '#3b82f6', ox:  390, oy:  120 },
+  { id: 'paybylink', label: 'PayByLink',     short: 'PAY-BY-LINK', color: '#00d4ff', ox: -309, oy: -120 },
+  { id: 'bnpl',      label: 'BNPL & Credit', short: 'BNPL',        color: '#a855f7', ox:  309, oy: -120 },
+  { id: 'wero',      label: 'Wero',          short: 'WERO',        color: '#6366f1', ox: -309, oy:    0 },
+  { id: 'noshow',    label: 'NoShow',        short: 'NOSHOW',      color: '#10b981', ox:  309, oy:    0 },
+  { id: 'crypto',    label: 'Crypto',        short: 'CRYPTO',      color: '#f7931a', ox: -309, oy:  120 },
+  { id: 'a2a',       label: 'A2A & Wallets', short: 'A2A',         color: '#3b82f6', ox:  309, oy:  120 },
 ];
 
 const PARTICLES = [
@@ -78,6 +78,7 @@ function ProductIcon({ id, size = 24, color }) {
       return (
         <svg {...common}>
           <circle cx="16" cy="16" r="13" stroke={c} strokeWidth="2" />
+          <circle cx="6" cy="10.5" r="0.6" fill="currentColor" />
           <path d="M9 11l3 10 4-7 4 7 3-10"
             stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -565,7 +566,7 @@ export default function PayPOSHero() {
             style={{
               position: 'absolute',
               left: p.ox, top: p.oy,
-              transform: 'translate(-50%, -50%)',
+              transform: p.ox < 0 ? 'translate(-100%, -50%)' : 'translateY(-50%)',
               zIndex: 8,
             }}
           >
