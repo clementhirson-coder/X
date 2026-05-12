@@ -468,7 +468,6 @@ function TerminalWithScreen({ activeState, time, scale = 1 }) {
       transform: `translateY(-50%) scale(${scale})`,
       transformOrigin: 'center',
       width: TERMINAL_WIDTH,
-      filter: 'drop-shadow(0 0 80px rgba(0,100,255,0.18))',
       zIndex: 5,
     }}>
       {/* Glow ring behind terminal */}
@@ -485,14 +484,15 @@ function TerminalWithScreen({ activeState, time, scale = 1 }) {
         zIndex: 0,
       }} />
 
-      {/* Cropped image mask — mix-blend-mode on the outer div so the
-          terminal shape composites against the page background correctly */}
+      {/* Cropped image mask.
+          overflow:hidden crops the right device from a 2-device image.
+          mix-blend-mode is on the <img> itself (not a parent with filter)
+          so it composites directly against the dark page background. */}
       <div style={{
         position: 'relative',
         width: TERMINAL_WIDTH,
         overflow: 'hidden',
         zIndex: 1,
-        mixBlendMode: 'screen',
       }}>
         <img
           src={`${import.meta.env.BASE_URL}devices6.png`}
@@ -501,6 +501,8 @@ function TerminalWithScreen({ activeState, time, scale = 1 }) {
             width: IMG_DISPLAY_WIDTH,
             marginLeft: IMG_OFFSET_X,
             display: 'block',
+            mixBlendMode: 'screen',
+            filter: 'drop-shadow(0 0 40px rgba(0,100,255,0.25))',
           }}
         />
       </div>
