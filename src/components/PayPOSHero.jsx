@@ -4,16 +4,33 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const TW   = 391;
-const THW  = TW / 2;
+/* ──────────────────────────────────────────────────────────────
+   TERMINAL CROP — devices6.png is 1290×1470, smartphone on left,
+   terminal on right. We crop to show ONLY the terminal.
+   Tweak the constants below to fine-tune the crop & screen overlay.
+   ───────────────────────────────────────────────────────────── */
+const TW              = 360;     // terminal container width (display px)
+const TH              = 620;     // terminal container height
+const IMG_W           = 603;     // image rendered width (scaled from 1290)
+const IMG_MARGIN_LEFT = -215;    // shift left to hide the smartphone
+const IMG_MARGIN_TOP  = -30;     // vertical adjustment
+
+/* Fake Android screen overlay — positioned over the terminal's actual screen */
+const SCREEN_LEFT     = 67;
+const SCREEN_TOP      = 64;
+const SCREEN_WIDTH    = 247;
+const SCREEN_HEIGHT   = 495;
+const SCREEN_RADIUS   = 22;
+
+const THW = TW / 2;
 
 const PRODUCTS = [
-  { id: 'paybylink', label: 'PayByLink',     color: '#00d4ff', ox: -280, oy:  -80 },
-  { id: 'bnpl',      label: 'BNPL & Credit', color: '#a855f7', ox:  220, oy:  -60 },
-  { id: 'wero',      label: 'Wero',          color: '#6366f1', ox: -300, oy:   60 },
-  { id: 'noshow',    label: 'NoShow',        color: '#10b981', ox:  240, oy:   80 },
-  { id: 'crypto',    label: 'Crypto',        color: '#f7931a', ox: -220, oy:  180 },
-  { id: 'a2a',       label: 'A2A & Wallets', color: '#3b82f6', ox:  200, oy:  160 },
+  { id: 'paybylink', label: 'PayByLink',     short: 'Pay Link',  color: '#00d4ff', ox: -280, oy:  -80 },
+  { id: 'bnpl',      label: 'BNPL & Credit', short: 'BNPL',      color: '#a855f7', ox:  220, oy:  -60 },
+  { id: 'wero',      label: 'Wero',          short: 'Wero',      color: '#6366f1', ox: -300, oy:   60 },
+  { id: 'noshow',    label: 'NoShow',        short: 'NoShow',    color: '#10b981', ox:  240, oy:   80 },
+  { id: 'crypto',    label: 'Crypto',        short: 'Crypto',    color: '#f7931a', ox: -220, oy:  180 },
+  { id: 'a2a',       label: 'A2A & Wallets', short: 'A2A',       color: '#3b82f6', ox:  200, oy:  160 },
 ];
 
 const PARTICLES = [
@@ -35,7 +52,7 @@ const STEP      = 1.2;
 const TOTAL     = PRODUCTS.length * STEP + 1;
 const SCROLL_PX = 140;
 
-/* ── Branded SVG icons, 32×32 viewBox ── */
+/* ── Branded SVG icons ── */
 function ProductIcon({ id, size = 24, color }) {
   const c = color || (PRODUCTS.find(p => p.id === id)?.color ?? '#00d4ff');
   const common = { width: size, height: size, viewBox: '0 0 32 32', fill: 'none' };
@@ -93,6 +110,67 @@ function ProductIcon({ id, size = 24, color }) {
       );
     default: return null;
   }
+}
+
+/* ── Fake Android screen with apps appearing as products get absorbed ── */
+function TerminalScreen({ absorbedIds }) {
+  const count = absorbedIds.size;
+  return (
+    <div style={S.screen}>
+      {/* Status bar */}
+      <div style={S.statusBar}>
+        <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+          <path d="M1 4.2a8 8 0 0110 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+          <path d="M2.7 6.6a5 5 0 016.6 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+          <circle cx="6" cy="9.5" r="0.6" fill="currentColor" />
+        </svg>
+        <span>09:00</span>
+        <svg width="14" height="8" viewBox="0 0 16 9" fill="none">
+          <rect x="0.5" y="0.5" width="12" height="8" rx="1.5" stroke="currentColor" />
+          <rect x="2" y="2" width="8" height="5" fill="currentColor" />
+          <rect x="13" y="3" width="1.6" height="3" fill="currentColor" />
+        </svg>
+      </div>
+
+      {/* Header */}
+      <div style={S.screenHeader}>
+        <span>PAYPOS</span>
+        <span style={{ color: '#00d4ff' }}>{count}/6</span>
+      </div>
+
+      {/* App grid (2 cols × 3 rows) */}
+      <div style={S.appGrid}>
+        {PRODUCTS.map(p => {
+          const active = absorbedIds.has(p.id);
+          return (
+            <div key={p.id} style={{
+              ...S.appCell,
+              ...(active ? {} : S.appCellEmpty),
+            }}>
+              {active ? (
+                <>
+                  <div style={{ ...S.appIconBox, background: `${p.color}26`, borderColor: `${p.color}55` }}>
+                    <ProductIcon id={p.id} size={22} />
+                  </div>
+                  <span style={{ ...S.appLabel, color: p.color }}>{p.short}</span>
+                </>
+              ) : (
+                <div style={S.appPlaceholder} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Bottom hint */}
+      {count === 0 && (
+        <div style={S.screenHint}>Scroll pour activer les modules</div>
+      )}
+      {count === PRODUCTS.length && (
+        <div style={{ ...S.screenHint, color: '#00d4ff' }}>6 modules actifs</div>
+      )}
+    </div>
+  );
 }
 
 export default function PayPOSHero() {
@@ -162,8 +240,8 @@ export default function PayPOSHero() {
           tl.to(terminal, { scaleX: 1.00, scaleY: 1.00, duration: 0.45, ease: 'elastic.out(1.1, 0.4)', transformOrigin: 'center bottom' }, at + 0.92);
 
           if (pulse) {
-            tl.to(pulse, { opacity: 0.7, duration: 0.06, ease: 'power2.out' }, at + 0.85);
-            tl.to(pulse, { opacity: 0,   duration: 0.40, ease: 'power2.in'  }, at + 0.91);
+            tl.to(pulse, { opacity: 0.55, duration: 0.06, ease: 'power2.out' }, at + 0.85);
+            tl.to(pulse, { opacity: 0,    duration: 0.40, ease: 'power2.in'  }, at + 0.91);
           }
 
           tl.to(glow, { opacity: 0.55, scale: 1.7, duration: 0.12, ease: 'power2.out' }, at + 0.85);
@@ -197,7 +275,9 @@ export default function PayPOSHero() {
             PayPOS centralise tous vos moyens de paiement en un seul terminal Android.
           </p>
         </div>
-        <img src={`${import.meta.env.BASE_URL}devices6.png`} alt="PayPOS Terminal" style={{ width: 240, mixBlendMode: 'screen' }} />
+        <TerminalImage>
+          <TerminalScreen absorbedIds={new Set(PRODUCTS.map(p => p.id))} />
+        </TerminalImage>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, width: '100%' }}>
           {PRODUCTS.map(p => (
             <div key={p.id} style={{ ...S.card, borderRadius: 14, padding: '11px 14px' }}>
@@ -232,7 +312,6 @@ export default function PayPOSHero() {
         />
       ))}
 
-      {/* ── Left: headline ── */}
       <div style={S.textBlock}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <span style={S.eyebrow} className="pp-eyebrow">Next-Gen Payment Terminal</span>
@@ -247,14 +326,13 @@ export default function PayPOSHero() {
         </p>
       </div>
 
-      {/* ── Orbital zone — zero-size anchor at terminal center ── */}
+      {/* Orbital zone — zero-size anchor at terminal center */}
       <div style={{
         position: 'absolute',
         right: `calc(13% + ${THW}px)`,
         top: '50%',
         width: 0, height: 0,
       }}>
-
         <div ref={glowRef} style={S.glowAtmo} />
 
         <svg width="0" height="0" style={S.svgLines} overflow="visible">
@@ -278,32 +356,18 @@ export default function PayPOSHero() {
 
         <div style={{
           position: 'absolute',
-          left: -THW, top: 0,
-          transform: 'translateY(-50%)',
-          width: TW,
+          left: -THW, top: -TH / 2,
+          width: TW, height: TH,
         }}>
-          <div ref={terminalRef} style={{ willChange: 'transform', position: 'relative', zIndex: 6 }}>
+          <div ref={terminalRef} style={{ willChange: 'transform', position: 'relative', zIndex: 6, width: '100%', height: '100%' }}>
             <div style={S.glowRing} />
-            <div ref={pulseRef} style={S.screenPulse} />
-            <img
-              src={`${import.meta.env.BASE_URL}devices6.png`}
-              alt="PayPOS Terminal"
-              style={{ width: '100%', height: 'auto', mixBlendMode: 'screen', display: 'block', position: 'relative', zIndex: 1 }}
-            />
-            {/* Icons absorbed into terminal */}
-            {absorbedIds.size > 0 && (
-              <div style={S.absorbedOverlay}>
-                {PRODUCTS.filter(p => absorbedIds.has(p.id)).map(p => (
-                  <div key={p.id} style={{ ...S.absorbedIcon, background: `${p.color}1F`, borderColor: `${p.color}55` }}>
-                    <ProductIcon id={p.id} size={20} />
-                  </div>
-                ))}
-              </div>
-            )}
+            <TerminalImage>
+              <TerminalScreen absorbedIds={absorbedIds} />
+              <div ref={pulseRef} style={S.screenPulse} />
+            </TerminalImage>
           </div>
         </div>
 
-        {/* Cards at orbital positions */}
         {PRODUCTS.map((p, i) => (
           <div
             key={p.id}
@@ -327,6 +391,20 @@ export default function PayPOSHero() {
   );
 }
 
+/* ── Terminal image cropped to hide the smartphone ── */
+function TerminalImage({ children }) {
+  return (
+    <div style={S.terminalCrop}>
+      <img
+        src={`${import.meta.env.BASE_URL}devices6.png`}
+        alt="PayPOS Terminal"
+        style={S.terminalImg}
+      />
+      {children}
+    </div>
+  );
+}
+
 /* ── Styles ── */
 function GlobalStyles() {
   return (
@@ -341,11 +419,12 @@ function GlobalStyles() {
         from { opacity: 0; transform: translateY(10px); }
         to   { opacity: 1; transform: translateY(0); }
       }
-      @keyframes popIn {
-        from { opacity: 0; transform: scale(0.4); }
+      @keyframes appPopIn {
+        from { opacity: 0; transform: scale(0.5); }
         to   { opacity: 1; transform: scale(1); }
       }
       .pp-eyebrow { animation: eyebrowIn 0.6s ease both; }
+      .pp-app-in  { animation: appPopIn 0.35s cubic-bezier(0.175,0.885,0.32,1.275) both; }
     `}</style>
   );
 }
@@ -404,37 +483,115 @@ const S = {
     transformOrigin: 'center center',
     zIndex: 3,
   },
-  screenPulse: {
+  glowRing: {
     position: 'absolute',
-    top: '8%', left: '6%', right: '6%', bottom: '6%',
-    borderRadius: 20,
-    background: 'radial-gradient(circle at 50% 45%, rgba(0,212,255,0.55) 0%, rgba(0,100,255,0.25) 50%, transparent 80%)',
-    opacity: 0, pointerEvents: 'none', zIndex: 5,
+    top: '50%', left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: TW * 0.9, height: TW * 0.9, borderRadius: '50%',
+    boxShadow: '0 0 80px 20px rgba(0,150,255,0.20)',
+    pointerEvents: 'none', zIndex: 0,
   },
   svgLines: {
     position: 'absolute', left: 0, top: 0,
     pointerEvents: 'none', zIndex: 3,
   },
-  glowRing: {
+
+  /* Terminal image crop */
+  terminalCrop: {
+    position: 'relative',
+    width: TW, height: TH,
+    overflow: 'hidden',
+    zIndex: 2,
+  },
+  terminalImg: {
     position: 'absolute',
-    top: '50%', left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 280, height: 280, borderRadius: '50%',
-    boxShadow: '0 0 80px 20px rgba(0,150,255,0.20)',
-    pointerEvents: 'none', zIndex: 0,
+    width: IMG_W,
+    height: 'auto',
+    left: IMG_MARGIN_LEFT,
+    top: IMG_MARGIN_TOP,
+    display: 'block',
+    pointerEvents: 'none',
+    userSelect: 'none',
   },
-  absorbedOverlay: {
-    position: 'absolute', top: '18%', left: '12%', right: '12%', bottom: '18%',
-    display: 'flex', flexWrap: 'wrap',
+
+  /* Fake screen */
+  screen: {
+    position: 'absolute',
+    left: SCREEN_LEFT, top: SCREEN_TOP,
+    width: SCREEN_WIDTH, height: SCREEN_HEIGHT,
+    borderRadius: SCREEN_RADIUS,
+    background: 'linear-gradient(180deg, #0d1b3e 0%, #0a1628 100%)',
+    overflow: 'hidden',
+    zIndex: 5,
+    display: 'flex', flexDirection: 'column',
+    boxShadow: 'inset 0 0 12px rgba(0,0,0,0.4)',
+  },
+  statusBar: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    padding: '6px 10px',
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 9, fontWeight: 600, letterSpacing: '0.06em',
+  },
+  screenHeader: {
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    padding: '4px 12px 6px',
+    color: 'rgba(255,255,255,0.55)',
+    fontSize: 8, fontWeight: 700, letterSpacing: '0.18em',
+    borderBottom: '1px solid rgba(255,255,255,0.06)',
+  },
+  appGrid: {
+    flex: 1,
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gridTemplateRows: '1fr 1fr 1fr',
+    gap: 6,
+    padding: 10,
+  },
+  appCell: {
+    display: 'flex', flexDirection: 'column',
     alignItems: 'center', justifyContent: 'center',
-    gap: 8, zIndex: 7,
+    gap: 4,
+    minHeight: 0,
+    animation: 'appPopIn 0.35s cubic-bezier(0.175,0.885,0.32,1.275) both',
   },
-  absorbedIcon: {
-    width: 40, height: 40, borderRadius: 10,
+  appCellEmpty: {
+    animation: 'none',
+  },
+  appIconBox: {
+    width: 36, height: 36,
+    borderRadius: 9,
     border: '1px solid',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    animation: 'popIn 0.3s cubic-bezier(0.175,0.885,0.32,1.275) both',
   },
+  appLabel: {
+    fontSize: 7, fontWeight: 700,
+    letterSpacing: '0.1em',
+    textTransform: 'uppercase',
+  },
+  appPlaceholder: {
+    width: 36, height: 36,
+    borderRadius: 9,
+    background: 'rgba(255,255,255,0.04)',
+    border: '1px dashed rgba(255,255,255,0.08)',
+  },
+  screenHint: {
+    fontSize: 8, fontWeight: 600,
+    color: 'rgba(255,255,255,0.4)',
+    textAlign: 'center',
+    padding: '0 0 8px',
+    letterSpacing: '0.12em',
+    textTransform: 'uppercase',
+  },
+  screenPulse: {
+    position: 'absolute',
+    left: SCREEN_LEFT, top: SCREEN_TOP,
+    width: SCREEN_WIDTH, height: SCREEN_HEIGHT,
+    borderRadius: SCREEN_RADIUS,
+    background: 'radial-gradient(circle at 50% 45%, rgba(0,212,255,0.55) 0%, rgba(0,100,255,0.25) 50%, transparent 80%)',
+    opacity: 0, pointerEvents: 'none', zIndex: 6,
+    mixBlendMode: 'screen',
+  },
+
   card: {
     display: 'flex', alignItems: 'center', gap: 12,
     background:          'rgba(255,255,255,0.04)',
