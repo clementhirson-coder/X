@@ -4,36 +4,31 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-/* ──────────────────────────────────────────────────────────────
-   TERMINAL — Verifone product photo, transparent bg, screen black.
-   terminal-photo.png is 1020×966 native; displayed at TW wide
-   (height scales proportionally → 570×540 displayed).
-   ───────────────────────────────────────────────────────────── */
 const TERMINAL_WIDTH = 570;
 const TERMINAL_IMG   = 'terminal-photo.png';
 
-/* ──────────────────────────────────────────────────────────────
-   FAKE SCREEN OVERLAY — recalculated at scale 570/480 = 1.1875.
-   Transform matches the terminal's perspective angle in the photo.
-   ───────────────────────────────────────────────────────────── */
 const SCREEN_LEFT      = 214;
 const SCREEN_TOP       = 46;
 const SCREEN_WIDTH     = 183;
 const SCREEN_HEIGHT    = 453;
 const SCREEN_RADIUS    = 8;
 const SCREEN_TRANSFORM = 'perspective(500px) rotateY(5.5deg) rotateX(-0.5deg)';
-// 2*(W+H - 4R) + 2πR  with W=182 H=452 R=8
-const SCREEN_PERIM = 1254;
+const SCREEN_PERIM     = 1254;
 
-const THW = TERMINAL_WIDTH / 2; // 285
+const THW             = TERMINAL_WIDTH / 2;  // 285
+const TERMINAL_HEIGHT = 540;
+const TH_HALF         = TERMINAL_HEIGHT / 2; // 270
+
+// Orbital anchor: right offset from section right edge (terminal pushed left so right cards fit)
+const RIGHT_OFFSET_PCT = 0.20;
 
 const PRODUCTS = [
-  { id: 'paybylink', label: 'PayByLink',     short: 'PAY-BY-LINK', color: '#00d4ff', ox: -309, oy: -120 },
-  { id: 'bnpl',      label: 'BNPL & Credit', short: 'BNPL',        color: '#a855f7', ox:  309, oy: -120 },
-  { id: 'wero',      label: 'Wero',          short: 'WERO',        color: '#6366f1', ox: -309, oy:    0 },
-  { id: 'noshow',    label: 'NoShow',        short: 'NOSHOW',      color: '#10b981', ox:  309, oy:    0 },
-  { id: 'crypto',    label: 'Crypto',        short: 'CRYPTO',      color: '#f7931a', ox: -309, oy:  120 },
-  { id: 'a2a',       label: 'A2A & Wallets', short: 'A2A',         color: '#3b82f6', ox:  309, oy:  120 },
+  { id: 'paybylink', label: 'PayByLink',     short: 'PAY-BY-LINK', color: '#00d4ff', ox: -301, oy: -120 },
+  { id: 'bnpl',      label: 'BNPL & Credit', short: 'BNPL',        color: '#a855f7', ox:  301, oy: -120 },
+  { id: 'wero',      label: 'Wero',          short: 'WERO',        color: '#6366f1', ox: -301, oy:    0 },
+  { id: 'noshow',    label: 'NoShow',        short: 'NOSHOW',      color: '#10b981', ox:  301, oy:    0 },
+  { id: 'crypto',    label: 'Crypto',        short: 'CRYPTO',      color: '#f7931a', ox: -301, oy:  120 },
+  { id: 'a2a',       label: 'A2A & Wallets', short: 'A2A',         color: '#3b82f6', ox:  301, oy:  120 },
 ];
 
 const PARTICLES = [
@@ -50,6 +45,23 @@ const PARTICLES = [
 const STEP      = 1.2;
 const TOTAL     = PRODUCTS.length * STEP + 1;
 const SCROLL_PX = 140;
+
+/* ── French time hook ── */
+function formatFrenchTime() {
+  return new Date().toLocaleTimeString('fr-FR', {
+    timeZone: 'Europe/Paris',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  });
+}
+function useFrenchTime() {
+  const [time, setTime] = useState(() => (typeof window !== 'undefined' ? formatFrenchTime() : '00:00'));
+  useEffect(() => {
+    setTime(formatFrenchTime());
+    const id = setInterval(() => setTime(formatFrenchTime()), 60000);
+    return () => clearInterval(id);
+  }, []);
+  return time;
+}
 
 /* ── Branded SVG icons ── */
 function ProductIcon({ id, size = 24, color }) {
@@ -138,7 +150,6 @@ function ScreenStatusBar({ time, dim = false }) {
 function ScreenHeader({ time }) {
   return (
     <>
-      {/* Status bar — même disposition que l'écran de boot */}
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         padding: '8px 12px 4px',
@@ -158,7 +169,6 @@ function ScreenHeader({ time }) {
           <rect x="13" y="3" width="1.6" height="3" fill="currentColor" />
         </svg>
       </div>
-      {/* PAYPOS centré */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '5px 0 7px' }}>
         <span style={{
           color: '#fff',
@@ -206,7 +216,7 @@ function Placeholder() {
   return <div style={{ height: 36, borderRadius: 8, background: 'rgba(255,255,255,0.05)' }} />;
 }
 
-/* ── Screen content per state ───────────────────────────── */
+/* ── Screen content per state ───────────────────────── */
 function ScreenContent({ state, time }) {
   const inner = {
     position: 'absolute', inset: 0,
@@ -319,10 +329,171 @@ function ScreenContent({ state, time }) {
   );
 }
 
+/* ── Compute path for one product line ── */
+function pathFor(product, anchorX, anchorY) {
+  const screenLeftX  = anchorX - 71;
+  const screenRightX = anchorX + 112;
+  const screenTopY   = anchorY - TH_HALF + SCREEN_TOP;
+  const screenBotY   = screenTopY + SCREEN_HEIGHT;
+  const screenMidY   = (screenTopY + screenBotY) / 2;
+  const oneThirdY    = screenTopY + (screenBotY - screenTopY) / 3;
+  const twoThirdY    = screenTopY + (screenBotY - screenTopY) * 2 / 3;
+  const CARD_HALF    = 85;
+
+  const ep = {
+    paybylink: { side: 'left',  y: screenMidY },
+    bnpl:      { side: 'right', y: oneThirdY },
+    wero:      { side: 'left',  y: screenMidY },
+    noshow:    { side: 'right', y: screenMidY },
+    crypto:    { side: 'left',  y: twoThirdY },
+    a2a:       { side: 'right', y: twoThirdY },
+  }[product.id];
+
+  const cardX = product.ox < 0 ? anchorX + product.ox - CARD_HALF : anchorX + product.ox + CARD_HALF;
+  const cardY = anchorY + product.oy;
+  const endX  = ep.side === 'left' ? screenLeftX : screenRightX;
+  const endY  = ep.y;
+  const dx    = endX - cardX;
+  const cp1x  = cardX + dx * 0.55;
+  const cp2x  = endX  - dx * 0.55;
+  return `M ${cardX.toFixed(1)} ${cardY.toFixed(1)} C ${cp1x.toFixed(1)} ${cardY.toFixed(1)}, ${cp2x.toFixed(1)} ${endY.toFixed(1)}, ${endX.toFixed(1)} ${endY.toFixed(1)}`;
+}
+
+/* ── Electric neon lines from each card to the terminal screen ── */
+function ElectricLines({ absorbedIds, sectionRef }) {
+  const [paths, setPaths] = useState([]);
+  const pathRefs   = useRef([]);
+  const lengths    = useRef([]);
+  const prevSetRef = useRef(new Set());
+
+  useEffect(() => {
+    if (!sectionRef.current) return;
+    const recompute = () => {
+      const rect = sectionRef.current.getBoundingClientRect();
+      const anchorX = rect.width  - (RIGHT_OFFSET_PCT * rect.width + THW);
+      const anchorY = rect.height / 2;
+      setPaths(PRODUCTS.map(p => pathFor(p, anchorX, anchorY)));
+    };
+    recompute();
+    window.addEventListener('resize', recompute);
+    return () => window.removeEventListener('resize', recompute);
+  }, [sectionRef]);
+
+  useEffect(() => {
+    pathRefs.current.forEach((path, i) => {
+      if (!path) return;
+      const len = path.getTotalLength();
+      lengths.current[i] = len;
+      // Preserve current state by setting strokeDasharray only; offset handled by GSAP
+      path.style.strokeDasharray = len;
+      if (!prevSetRef.current.has(PRODUCTS[i].id)) {
+        path.style.strokeDashoffset = len;
+        path.style.opacity = 0;
+      }
+    });
+  }, [paths]);
+
+  useEffect(() => {
+    PRODUCTS.forEach((p, i) => {
+      const path = pathRefs.current[i];
+      if (!path) return;
+      const len  = lengths.current[i] || (path.getTotalLength ? path.getTotalLength() : 0);
+      const isOn  = absorbedIds.has(p.id);
+      const wasOn = prevSetRef.current.has(p.id);
+
+      if (!wasOn && isOn) {
+        gsap.killTweensOf(path);
+        const tl = gsap.timeline();
+        tl.set(path, { strokeWidth: 1.5 });
+        tl.to(path, { strokeDashoffset: 0, opacity: 1, duration: 0.4, ease: 'power2.in' });
+        tl.to(path, { strokeWidth: 3,   duration: 0.15, ease: 'power2.out' });
+        tl.to(path, { strokeWidth: 1.5, duration: 0.15, ease: 'power2.in'  });
+        tl.fromTo(path,
+          { opacity: 0.4 },
+          { opacity: 0.7, duration: 1, repeat: -1, yoyo: true, ease: 'sine.inOut', delay: i * 0.15 }
+        );
+      } else if (wasOn && !isOn) {
+        gsap.killTweensOf(path);
+        gsap.to(path, { strokeDashoffset: len, opacity: 0, duration: 0.3, ease: 'power2.out' });
+      }
+    });
+    if (absorbedIds.size === 6 && prevSetRef.current.size < 6) {
+      pathRefs.current.forEach((path) => {
+        if (!path) return;
+        gsap.to(path, { strokeWidth: 4, opacity: 1, duration: 0.25, ease: 'power2.out' });
+        gsap.to(path, { strokeWidth: 1.5, opacity: 0.7, duration: 0.4, delay: 0.5, ease: 'power2.in' });
+      });
+    }
+    prevSetRef.current = new Set(absorbedIds);
+  }, [absorbedIds, paths]);
+
+  return (
+    <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 5 }}>
+      {paths.map((d, i) => {
+        const p = PRODUCTS[i];
+        return (
+          <path
+            key={p.id}
+            ref={el => { pathRefs.current[i] = el; }}
+            d={d}
+            stroke={p.color}
+            strokeWidth="1.5"
+            fill="none"
+            strokeLinecap="round"
+            style={{ filter: `drop-shadow(0 0 4px ${p.color})`, opacity: 0 }}
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
+/* ── Grain + light bloom layer ── */
+function GrainLayer({ intense }) {
+  return (
+    <div style={{
+      position: 'absolute',
+      left: -300, top: -350,
+      width: 600, height: 700,
+      pointerEvents: 'none',
+      zIndex: 1,
+    }}>
+      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden>
+        <defs>
+          <filter id="pp-grain-filter">
+            <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
+            <feColorMatrix type="saturate" values="0" />
+          </filter>
+        </defs>
+      </svg>
+      {/* Light bloom */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: intense
+          ? 'radial-gradient(ellipse 55% 65% at 50% 45%, rgba(0,212,255,0.20) 0%, rgba(60,120,255,0.10) 50%, transparent 100%)'
+          : 'radial-gradient(ellipse 50% 60% at 50% 45%, rgba(120,180,255,0.12) 0%, rgba(60,120,255,0.06) 50%, transparent 100%)',
+        mixBlendMode: 'screen',
+        opacity: 0.8,
+        animation: 'bloomPulse 5s ease-in-out infinite',
+        transition: 'background 1s ease',
+      }} />
+      {/* Grain noise overlay */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        opacity: intense ? 0.09 : 0.04,
+        mixBlendMode: 'screen',
+        background: 'radial-gradient(ellipse at center, rgba(100,180,255,0.15) 0%, rgba(50,100,255,0.08) 40%, transparent 70%)',
+        filter: 'url(#pp-grain-filter)',
+        animation: 'grainDrift 8s ease-in-out infinite',
+        transition: 'opacity 0.8s ease',
+      }} />
+    </div>
+  );
+}
+
 export default function PayPOSHero() {
   const sectionRef  = useRef(null);
   const terminalRef = useRef(null);
-  const glowRef     = useRef(null);
   const pulseRef    = useRef(null);
   const subtitleRef = useRef(null);
   const ctaRef      = useRef(null);
@@ -333,7 +504,7 @@ export default function PayPOSHero() {
     () => typeof window !== 'undefined' && window.innerWidth < 768
   );
   const [absorbedIds, setAbsorbedIds] = useState(new Set());
-  const time = '09:52 am';
+  const time = useFrenchTime();
   const activeState = absorbedIds.size;
   const intense = activeState === 6;
 
@@ -350,8 +521,7 @@ export default function PayPOSHero() {
     const timer = setTimeout(() => {
       const section  = sectionRef.current;
       const terminal = terminalRef.current;
-      const glow     = glowRef.current;
-      if (!section || !terminal || !glow) return;
+      if (!section || !terminal) return;
 
       ctx = gsap.context(() => {
         gsap.to(terminal, { y: -8, duration: 3, ease: 'sine.inOut', yoyo: true, repeat: -1 });
@@ -394,9 +564,6 @@ export default function PayPOSHero() {
             tl.to(pulse, { opacity: 0.55, duration: 0.06, ease: 'power2.out' }, at + 0.85);
             tl.to(pulse, { opacity: 0,    duration: 0.40, ease: 'power2.in'  }, at + 0.91);
           }
-
-          tl.to(glow, { opacity: 0.55, scale: 1.7, duration: 0.12, ease: 'power2.out' }, at + 0.85);
-          tl.to(glow, { opacity: 0.15, scale: 1.0, duration: 0.15, ease: 'power2.in'  }, at + 0.97);
         });
 
         tl.fromTo(
@@ -456,23 +623,7 @@ export default function PayPOSHero() {
       <GlobalStyles />
 
       <div style={S.atmo1} />
-      <div style={S.atmo2} />
       <div style={S.atmo3} />
-
-      <svg
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }}
-        overflow="visible"
-      >
-        <defs>
-          <style>{`@keyframes h1LineFlow { to { stroke-dashoffset: -27; } }`}</style>
-        </defs>
-        <line x1="36%" y1="45%" x2="65%" y2="50%"
-          stroke="rgba(0,212,255,0.08)" strokeWidth="1" strokeDasharray="3 6"
-          style={{ animation: 'h1LineFlow 3s linear infinite' }} />
-        <line x1="36%" y1="55%" x2="65%" y2="50%"
-          stroke="rgba(0,212,255,0.08)" strokeWidth="1" strokeDasharray="3 6"
-          style={{ animation: 'h1LineFlow 3s linear infinite 1.5s' }} />
-      </svg>
 
       {PARTICLES.map(p => (
         <div
@@ -492,22 +643,22 @@ export default function PayPOSHero() {
           <span style={S.eyebrow} className="pp-eyebrow">Next-Gen Payment Terminal</span>
           <div style={S.eyebrowLine} />
         </div>
-        <h1 style={S.h1}>
+        <h1 style={{ ...S.h1, marginBottom: 0 }}>
           <span style={S.gradientH1}>One Terminal.</span>
           <br />Every Payment.
         </h1>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 32 }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             {PRODUCTS.map((_, i) => (
               <div key={i} style={{
-                width: 8, height: 8, borderRadius: '50%',
-                background: activeState > i ? '#00d4ff' : 'rgba(255,255,255,0.2)',
-                boxShadow: activeState > i ? '0 0 8px #00d4ff' : 'none',
+                width: 10, height: 10, borderRadius: '50%',
+                background: activeState > i ? '#00d4ff' : 'rgba(255,255,255,0.35)',
+                boxShadow: activeState > i ? '0 0 10px #00d4ff' : 'none',
                 transition: 'background 0.3s ease, box-shadow 0.3s ease',
               }} />
             ))}
           </div>
-          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, letterSpacing: '0.04em' }}>
+          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12, letterSpacing: '0.04em' }}>
             {activeState} / 6 modules actifs
           </span>
         </div>
@@ -519,33 +670,18 @@ export default function PayPOSHero() {
         </button>
       </div>
 
+      {/* Electric neon lines from cards to terminal */}
+      <ElectricLines absorbedIds={absorbedIds} sectionRef={sectionRef} />
+
       {/* Orbital zone — zero-size anchor at terminal center */}
       <div style={{
         position: 'absolute',
-        right: `calc(12% + ${THW}px)`,
+        right: `calc(${RIGHT_OFFSET_PCT * 100}% + ${THW}px)`,
         top: '50%',
         width: 0, height: 0,
       }}>
-        <div ref={glowRef} style={S.glowAtmo} />
-
-        <svg width="0" height="0" style={S.svgLines} overflow="visible">
-          <defs>
-            <style>{`
-              .dash { animation: dashFlow 3s linear infinite; }
-              @keyframes dashFlow { to { stroke-dashoffset: -36; } }
-            `}</style>
-          </defs>
-          {PRODUCTS.map(p => (
-            <line
-              key={p.id}
-              x1={p.ox} y1={p.oy} x2={0} y2={0}
-              stroke="rgba(0,212,255,0.15)"
-              strokeDasharray="4 8"
-              strokeWidth="1"
-              className="dash"
-            />
-          ))}
-        </svg>
+        {/* Grain layer behind terminal */}
+        <GrainLayer intense={intense} />
 
         {/* Terminal centered on the orbital anchor */}
         <div style={{
@@ -601,12 +737,10 @@ function ScreenBorder({ intense }) {
         overflow: 'visible',
       }}
     >
-      {/* Full lit border — only when all modules loaded */}
       {intense && (
         <rect x="0.5" y="0.5" width={W} height={H} rx={SCREEN_RADIUS}
           fill="none" stroke="rgba(0,212,255,0.30)" strokeWidth="1" />
       )}
-      {/* Traveling comet — 80px segment during loading, full loop when intense */}
       <rect x="0.5" y="0.5" width={W} height={H} rx={SCREEN_RADIUS}
         fill="none"
         stroke="#00d4ff"
@@ -628,54 +762,6 @@ function ScreenBorder({ intense }) {
 function TerminalInner({ activeState, time, intense, pulseRef }) {
   return (
     <div style={{ position: 'relative', width: TERMINAL_WIDTH }}>
-      {/* Soft glow behind terminal */}
-      <div style={{
-        position: 'absolute',
-        left: '50%', top: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: '130%', height: '110%',
-        background: 'radial-gradient(ellipse at center, rgba(0,212,255,0.10) 0%, transparent 70%)',
-        pointerEvents: 'none',
-        zIndex: 0,
-      }} />
-      {/* Deep blue box-shadow glow */}
-      <div style={{
-        position: 'absolute',
-        left: '50%', top: '50%',
-        transform: 'translate(-50%, -50%)',
-        width: 300, height: 300,
-        borderRadius: '50%',
-        background: 'transparent',
-        boxShadow: '0 0 160px 60px rgba(0, 100, 255, 0.18)',
-        pointerEvents: 'none',
-        zIndex: 0,
-      }} />
-      {/* Spinning neon ring — zero-size anchor at terminal center */}
-      <div style={{ position: 'absolute', left: '50%', top: '50%', width: 0, height: 0, pointerEvents: 'none', zIndex: 2 }}>
-        <svg
-          width={TERMINAL_WIDTH + 60}
-          height={600}
-          style={{
-            position: 'absolute',
-            left: -(TERMINAL_WIDTH + 60) / 2,
-            top: -300,
-            animation: 'spin 3s linear infinite',
-            transformOrigin: 'center center',
-          }}
-          overflow="visible"
-        >
-          <ellipse
-            cx={(TERMINAL_WIDTH + 60) / 2} cy={300}
-            rx={(TERMINAL_WIDTH + 60) / 2 - 2} ry={298}
-            fill="none"
-            stroke="rgba(0,212,255,0.7)"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeDasharray="100 1819"
-            style={{ filter: 'drop-shadow(0 0 5px rgba(0,212,255,0.9))' }}
-          />
-        </svg>
-      </div>
       <img
         src={`${import.meta.env.BASE_URL}${TERMINAL_IMG}`}
         alt="PayPOS Terminal"
@@ -685,11 +771,13 @@ function TerminalInner({ activeState, time, intense, pulseRef }) {
           display: 'block',
           position: 'relative',
           zIndex: 1,
-          filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.5))',
+          filter: intense
+            ? 'drop-shadow(0 20px 40px rgba(0,0,0,0.5)) drop-shadow(0 0 30px rgba(0,150,255,0.4))'
+            : 'drop-shadow(0 20px 40px rgba(0,0,0,0.5))',
+          transition: 'filter 1s ease',
         }}
       />
 
-      {/* Fake screen overlay — transform matches terminal photo angle */}
       <div style={{
         position: 'absolute',
         top:    SCREEN_TOP,
@@ -762,10 +850,6 @@ function GlobalStyles() {
         from { stroke-dashoffset: 1254; }
         to   { stroke-dashoffset: 0; }
       }
-      @keyframes spin {
-        from { transform: rotate(0deg); }
-        to   { transform: rotate(360deg); }
-      }
       @keyframes pp-flash {
         0%   { opacity: 0; }
         25%  { opacity: 0.35; }
@@ -781,6 +865,17 @@ function GlobalStyles() {
       }
       @keyframes atmoBreath {
         0%, 100% { opacity: 0.8; }
+        50%       { opacity: 1; }
+      }
+      @keyframes grainDrift {
+        0%   { transform: translate(0px, 0px) scale(1); }
+        25%  { transform: translate(-2px, 1px) scale(1.01); }
+        50%  { transform: translate(1px, -2px) scale(0.99); }
+        75%  { transform: translate(2px, 1px) scale(1.01); }
+        100% { transform: translate(0px, 0px) scale(1); }
+      }
+      @keyframes bloomPulse {
+        0%, 100% { opacity: 0.6; }
         50%       { opacity: 1; }
       }
 
@@ -815,13 +910,6 @@ const S = {
     position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
     background: 'radial-gradient(ellipse 60% 60% at 65% 50%, rgba(0,100,255,0.15) 0%, rgba(0,212,255,0.05) 40%, transparent 70%)',
   },
-  atmo2: {
-    position: 'absolute', zIndex: 1, pointerEvents: 'none',
-    width: 300, height: 300, borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(0,180,255,0.20) 0%, transparent 70%)',
-    right: `calc(12% + ${THW - 150}px)`,
-    top: 'calc(50% - 150px)',
-  },
   textBlock: {
     position: 'absolute', left: '6%', top: '50%', transform: 'translateY(-50%)',
     zIndex: 10, display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 460,
@@ -847,19 +935,6 @@ const S = {
   },
   subtitle: {
     color: 'rgba(255,255,255,0.55)', fontSize: 15, lineHeight: 1.6, maxWidth: 380,
-  },
-  glowAtmo: {
-    position: 'absolute',
-    width: 520, height: 520, left: -260, top: -260,
-    borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(0,212,255,0.12) 0%, transparent 70%)',
-    opacity: 0.15, pointerEvents: 'none',
-    transformOrigin: 'center center',
-    zIndex: 3,
-  },
-  svgLines: {
-    position: 'absolute', left: 0, top: 0,
-    pointerEvents: 'none', zIndex: 3,
   },
   atmo3: {
     position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
