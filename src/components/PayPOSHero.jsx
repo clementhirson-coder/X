@@ -5,24 +5,22 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 gsap.registerPlugin(ScrollTrigger);
 
 /* ──────────────────────────────────────────────────────────────
-   TERMINAL POSITIONING + IMAGE CROP
-   devices6.png contains a smartphone (left) + Verifone terminal (right).
-   We render the image at IMG_DISPLAY_WIDTH and shift it by IMG_OFFSET_X
-   inside an overflow:hidden mask so only the right device is visible.
+   TERMINAL — single Verifone device, image already pre-cropped.
+   public/terminal.png is 580×1140 natural; we display it at TW wide
+   and the height scales proportionally.
    ───────────────────────────────────────────────────────────── */
-const TERMINAL_WIDTH    = 420;
-const IMG_DISPLAY_WIDTH = 840;   // image rendered at 2× — adjust if proportions differ
-const IMG_OFFSET_X      = -420;  // shift left to hide the smartphone
+const TERMINAL_WIDTH = 340;     // display width of the terminal device
+const TERMINAL_IMG   = 'terminal.png';
 
 /* ──────────────────────────────────────────────────────────────
-   FAKE SCREEN OVERLAY — adjust pixel-by-pixel to align with terminal
-   These five values position a div exactly over the terminal screen.
+   FAKE SCREEN OVERLAY — calibrated for terminal.png at TW=340.
+   Original screen ≈ x:145-450, y:180-830 in the 580×1140 image.
    ───────────────────────────────────────────────────────────── */
-const SCREEN_TOP    = 82;
-const SCREEN_LEFT   = 50;
-const SCREEN_WIDTH  = 224;
-const SCREEN_HEIGHT = 385;
-const SCREEN_RADIUS = 24;
+const SCREEN_LEFT   = 85;
+const SCREEN_TOP    = 105;
+const SCREEN_WIDTH  = 178;
+const SCREEN_HEIGHT = 380;
+const SCREEN_RADIUS = 18;
 
 const THW = TERMINAL_WIDTH / 2;
 
@@ -516,27 +514,22 @@ export default function PayPOSHero() {
   );
 }
 
-/* ── Terminal image (cropped) + screen overlay ── */
+/* ── Terminal image + screen overlay ── */
 function TerminalInner({ activeState, time, intense, pulseRef }) {
   return (
     <div style={{ position: 'relative', width: TERMINAL_WIDTH }}>
-      {/* Cropped image mask */}
-      <div style={{
-        position: 'relative',
-        width: TERMINAL_WIDTH,
-        overflow: 'hidden',
-        zIndex: 1,
-      }}>
-        <img
-          src={`${import.meta.env.BASE_URL}devices6.png`}
-          alt="PayPOS Terminal"
-          style={{
-            width: IMG_DISPLAY_WIDTH,
-            marginLeft: IMG_OFFSET_X,
-            display: 'block',
-          }}
-        />
-      </div>
+      <img
+        src={`${import.meta.env.BASE_URL}${TERMINAL_IMG}`}
+        alt="PayPOS Terminal"
+        style={{
+          width: TERMINAL_WIDTH,
+          height: 'auto',
+          display: 'block',
+          position: 'relative',
+          zIndex: 1,
+          filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.5))',
+        }}
+      />
 
       {/* Fake screen overlay */}
       <div style={{

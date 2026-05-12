@@ -1,0 +1,57 @@
+name: Recrop terminal image (one-shot)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/recrop-terminal.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  crop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Pillow
+        run: pip install --quiet Pillow
+
+      - name: Re-crop terminal.png to 580x1140
+        run: |
+          python3 - <<'PY'
+          from PIL import Image
+          im = Image.open('public/terminal.png')
+          print('Source size:', im.size)
+          # Crop region calibrated locally: x=1270-1850, y=90-1230
+          if im.size[0] > 1000:
+              cropped = im.crop((1270, 90, 1850, 1230))
+              cropped.save('public/terminal.png', 'PNG', optimize=True)
+              print('Saved cropped:', cropped.size)
+          else:
+              print('Already small, skipping')
+          PY
+          ls -lh public/terminal.png
+
+      - name: Remove this workflow (self-cleanup)
+        run: rm -f .github/workflows/recrop-terminal.yml
+
+      - name: Commit + push
+        run: |
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          if git diff --quiet public/terminal.png .github/workflows/recrop-terminal.yml; then
+            echo 'Nothing to commit'
+          else
+            git add public/terminal.png .github/workflows/recrop-terminal.yml
+            git commit -m 'chore: re-crop terminal.png to 580x1140, remove one-shot workflow'
+            git push
+          fi
