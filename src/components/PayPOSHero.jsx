@@ -7,31 +7,33 @@ gsap.registerPlugin(ScrollTrigger);
 /* ──────────────────────────────────────────────────────────────
    TERMINAL — Verifone product photo, transparent bg, screen black.
    terminal-photo.png is 1020×966 native; displayed at TW wide
-   (height scales proportionally → 480×456 displayed).
+   (height scales proportionally → 570×540 displayed).
    ───────────────────────────────────────────────────────────── */
-const TERMINAL_WIDTH = 480;
+const TERMINAL_WIDTH = 570;
 const TERMINAL_IMG   = 'terminal-photo.png';
 
 /* ──────────────────────────────────────────────────────────────
-   FAKE SCREEN OVERLAY — locked values from design handoff.
+   FAKE SCREEN OVERLAY — recalculated at scale 570/480 = 1.1875.
    Transform matches the terminal's perspective angle in the photo.
    ───────────────────────────────────────────────────────────── */
-const SCREEN_LEFT      = 180;
-const SCREEN_TOP       = 39;
-const SCREEN_WIDTH     = 154;
-const SCREEN_HEIGHT    = 381;
-const SCREEN_RADIUS    = 7;
-const SCREEN_TRANSFORM = 'perspective(420px) rotateY(5.5deg) rotateX(-0.5deg)';
+const SCREEN_LEFT      = 214;
+const SCREEN_TOP       = 46;
+const SCREEN_WIDTH     = 183;
+const SCREEN_HEIGHT    = 453;
+const SCREEN_RADIUS    = 8;
+const SCREEN_TRANSFORM = 'perspective(500px) rotateY(5.5deg) rotateX(-0.5deg)';
+// 2*(W+H - 4R) + 2πR  with W=182 H=452 R=8
+const SCREEN_PERIM = 1254;
 
-const THW = TERMINAL_WIDTH / 2;
+const THW = TERMINAL_WIDTH / 2; // 285
 
 const PRODUCTS = [
-  { id: 'paybylink', label: 'PayByLink',     short: 'PAY-BY-LINK', color: '#00d4ff', ox: -280, oy:  -80 },
-  { id: 'bnpl',      label: 'BNPL & Credit', short: 'BNPL',        color: '#a855f7', ox:  220, oy:  -60 },
-  { id: 'wero',      label: 'Wero',          short: 'WERO',        color: '#6366f1', ox: -300, oy:   60 },
-  { id: 'noshow',    label: 'NoShow',        short: 'NOSHOW',      color: '#10b981', ox:  240, oy:   80 },
-  { id: 'crypto',    label: 'Crypto',        short: 'CRYPTO',      color: '#f7931a', ox: -220, oy:  180 },
-  { id: 'a2a',       label: 'A2A & Wallets', short: 'A2A',         color: '#3b82f6', ox:  200, oy:  160 },
+  { id: 'paybylink', label: 'PayByLink',     short: 'PAY-BY-LINK', color: '#00d4ff', ox: -309, oy: -120 },
+  { id: 'bnpl',      label: 'BNPL & Credit', short: 'BNPL',        color: '#a855f7', ox:  309, oy: -120 },
+  { id: 'wero',      label: 'Wero',          short: 'WERO',        color: '#6366f1', ox: -309, oy:    0 },
+  { id: 'noshow',    label: 'NoShow',        short: 'NOSHOW',      color: '#10b981', ox:  309, oy:    0 },
+  { id: 'crypto',    label: 'Crypto',        short: 'CRYPTO',      color: '#f7931a', ox: -309, oy:  120 },
+  { id: 'a2a',       label: 'A2A & Wallets', short: 'A2A',         color: '#3b82f6', ox:  309, oy:  120 },
 ];
 
 const PARTICLES = [
@@ -136,32 +138,41 @@ function ScreenStatusBar({ time, dim = false }) {
 function ScreenHeader({ time }) {
   return (
     <>
+      {/* Status bar — même disposition que l'écran de boot */}
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '6px 10px 5px',
-        color: 'rgba(255,255,255,0.55)',
-        fontSize: 11, fontWeight: 600,
+        padding: '8px 12px 4px',
+        color: 'rgba(255,255,255,0.6)',
+        fontSize: 9, fontWeight: 600, letterSpacing: '0.08em',
       }}>
-        <span style={{ letterSpacing: '0.08em' }}>{time}</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-            <path d="M1 4.2a8 8 0 0110 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-            <path d="M2.7 6.6a5 5 0 016.6 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-            <path d="M4.2 9a2 2 0 013.6 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-            <circle cx="6" cy="10.5" r="0.6" fill="currentColor" />
-          </svg>
-          <svg width="16" height="9" viewBox="0 0 16 9" fill="none">
-            <rect x="0.5" y="0.5" width="12" height="8" rx="1.5" stroke="currentColor" />
-            <rect x="2" y="2" width="8" height="5" fill="currentColor" />
-            <rect x="13" y="3" width="1.6" height="3" fill="currentColor" />
-          </svg>
-        </div>
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+          <path d="M1 4.2a8 8 0 0110 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+          <path d="M2.7 6.6a5 5 0 016.6 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+          <path d="M4.2 9a2 2 0 013.6 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+          <circle cx="6" cy="10.5" r="0.6" fill="currentColor" />
+        </svg>
+        <span>{time}</span>
+        <svg width="16" height="9" viewBox="0 0 16 9" fill="none">
+          <rect x="0.5" y="0.5" width="12" height="8" rx="1.5" stroke="currentColor" />
+          <rect x="2" y="2" width="8" height="5" fill="currentColor" />
+          <rect x="13" y="3" width="1.6" height="3" fill="currentColor" />
+        </svg>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '4px 0 9px' }}>
-        <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#00d4ff', boxShadow: '0 0 8px #00d4ff' }} />
-        <span style={{ color: '#fff', fontSize: 14, fontWeight: 700, letterSpacing: '0.12em' }}>PAYPOS · {time}</span>
+      {/* PAYPOS centré */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '5px 0 7px' }}>
+        <span style={{
+          color: '#fff',
+          fontSize: 13,
+          fontWeight: 800,
+          letterSpacing: '0.28em',
+          textTransform: 'uppercase',
+          background: 'linear-gradient(135deg, #ffffff 0%, #7dd3fc 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+        }}>PAYPOS</span>
       </div>
-      <div style={{ height: 1, margin: '0 10px', background: 'linear-gradient(90deg, transparent, rgba(0,212,255,0.3), transparent)' }} />
+      <div style={{ height: 1, margin: '0 10px', background: 'linear-gradient(90deg, transparent, rgba(0,212,255,0.35), transparent)' }} />
     </>
   );
 }
@@ -209,19 +220,11 @@ function ScreenContent({ state, time }) {
     return (
       <div style={inner}>
         <ScreenStatusBar time={time} dim />
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#00d4ff', boxShadow: '0 0 8px #00d4ff' }} />
-            <div style={{ color: '#fff', fontSize: 14, fontWeight: 700, letterSpacing: '0.12em' }}>PAYPOS</div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#00d4ff', boxShadow: '0 0 8px #00d4ff', flexShrink: 0 }} />
+            <div style={{ color: '#fff', fontSize: 28, fontWeight: 800, letterSpacing: '0.1em' }}>PAYPOS</div>
           </div>
-          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, letterSpacing: '0.06em' }}>{time}</div>
-        </div>
-        <div style={{ position: 'relative', height: 2, overflow: 'hidden' }}>
-          <div style={{
-            position: 'absolute', top: 0, left: 0, height: '100%', width: '60%',
-            background: 'linear-gradient(90deg, transparent, #00d4ff 50%, transparent)',
-            animation: 'pp-scanline 2s linear infinite',
-          }} />
         </div>
       </div>
     );
@@ -322,6 +325,7 @@ export default function PayPOSHero() {
   const glowRef     = useRef(null);
   const pulseRef    = useRef(null);
   const subtitleRef = useRef(null);
+  const ctaRef      = useRef(null);
   const cardRefs    = useRef([]);
   const absorbedRef = useRef(new Set());
 
@@ -350,7 +354,7 @@ export default function PayPOSHero() {
       if (!section || !terminal || !glow) return;
 
       ctx = gsap.context(() => {
-        gsap.to(terminal, { y: -18, duration: 3, ease: 'sine.inOut', yoyo: true, repeat: -1 });
+        gsap.to(terminal, { y: -8, duration: 3, ease: 'sine.inOut', yoyo: true, repeat: -1 });
 
         const tl = gsap.timeline({
           scrollTrigger: {
@@ -363,10 +367,11 @@ export default function PayPOSHero() {
             onUpdate: (self) => {
               let changed = false;
               PRODUCTS.forEach((p, i) => {
-                const on  = ((i + 1) * STEP) / TOTAL;
-                const off = (i       * STEP) / TOTAL;
-                if (self.progress >= on  && !absorbedRef.current.has(p.id)) { absorbedRef.current.add(p.id);    changed = true; }
-                if (self.progress <  off &&  absorbedRef.current.has(p.id)) { absorbedRef.current.delete(p.id); changed = true; }
+                const threshold = ((i + 1) * STEP) / TOTAL;
+                const shouldBeOn = self.progress >= threshold;
+                const isOn = absorbedRef.current.has(p.id);
+                if (shouldBeOn && !isOn)  { absorbedRef.current.add(p.id);    changed = true; }
+                if (!shouldBeOn && isOn)  { absorbedRef.current.delete(p.id); changed = true; }
               });
               if (changed) setAbsorbedIds(new Set(absorbedRef.current));
             },
@@ -400,6 +405,13 @@ export default function PayPOSHero() {
           { opacity: 1, y: 0, duration: 0.5 },
           PRODUCTS.length * STEP + 0.2
         );
+
+        tl.fromTo(
+          ctaRef.current,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.4 },
+          PRODUCTS.length * STEP + 0.7
+        );
       }, section);
     }, 150);
 
@@ -420,6 +432,9 @@ export default function PayPOSHero() {
           <p style={S.subtitle}>
             PayPOS centralise tous vos moyens de paiement en un seul terminal Android.
           </p>
+          <button style={{ ...S.ctaBtn, alignSelf: 'center' }} className="pp-cta-btn">
+            Découvrir PayPOS →
+          </button>
         </div>
         <TerminalWithScreen activeState={6} time={time} scale={0.78} />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, width: '100%' }}>
@@ -442,6 +457,22 @@ export default function PayPOSHero() {
 
       <div style={S.atmo1} />
       <div style={S.atmo2} />
+      <div style={S.atmo3} />
+
+      <svg
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 0 }}
+        overflow="visible"
+      >
+        <defs>
+          <style>{`@keyframes h1LineFlow { to { stroke-dashoffset: -27; } }`}</style>
+        </defs>
+        <line x1="36%" y1="45%" x2="65%" y2="50%"
+          stroke="rgba(0,212,255,0.08)" strokeWidth="1" strokeDasharray="3 6"
+          style={{ animation: 'h1LineFlow 3s linear infinite' }} />
+        <line x1="36%" y1="55%" x2="65%" y2="50%"
+          stroke="rgba(0,212,255,0.08)" strokeWidth="1" strokeDasharray="3 6"
+          style={{ animation: 'h1LineFlow 3s linear infinite 1.5s' }} />
+      </svg>
 
       {PARTICLES.map(p => (
         <div
@@ -465,15 +496,33 @@ export default function PayPOSHero() {
           <span style={S.gradientH1}>One Terminal.</span>
           <br />Every Payment.
         </h1>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {PRODUCTS.map((_, i) => (
+              <div key={i} style={{
+                width: 8, height: 8, borderRadius: '50%',
+                background: activeState > i ? '#00d4ff' : 'rgba(255,255,255,0.2)',
+                boxShadow: activeState > i ? '0 0 8px #00d4ff' : 'none',
+                transition: 'background 0.3s ease, box-shadow 0.3s ease',
+              }} />
+            ))}
+          </div>
+          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, letterSpacing: '0.04em' }}>
+            {activeState} / 6 modules actifs
+          </span>
+        </div>
         <p ref={subtitleRef} style={{ ...S.subtitle, opacity: 0 }}>
           PayPOS centralise tous vos moyens de paiement en un seul terminal Android.
         </p>
+        <button ref={ctaRef} style={{ ...S.ctaBtn, opacity: 0 }} className="pp-cta-btn">
+          Découvrir PayPOS →
+        </button>
       </div>
 
       {/* Orbital zone — zero-size anchor at terminal center */}
       <div style={{
         position: 'absolute',
-        right: `calc(13% + ${THW}px)`,
+        right: `calc(12% + ${THW}px)`,
         top: '50%',
         width: 0, height: 0,
       }}>
@@ -516,7 +565,7 @@ export default function PayPOSHero() {
             style={{
               position: 'absolute',
               left: p.ox, top: p.oy,
-              transform: 'translate(-50%, -50%)',
+              transform: p.ox < 0 ? 'translate(-100%, -50%)' : 'translateY(-50%)',
               zIndex: 8,
             }}
           >
@@ -533,10 +582,100 @@ export default function PayPOSHero() {
   );
 }
 
+/* ── Neon border that traces the screen perimeter ── */
+function ScreenBorder({ intense }) {
+  const W = SCREEN_WIDTH - 1;
+  const H = SCREEN_HEIGHT - 1;
+  const cometLen = intense ? SCREEN_PERIM : 80;
+  return (
+    <svg
+      width={SCREEN_WIDTH}
+      height={SCREEN_HEIGHT}
+      style={{
+        position: 'absolute',
+        top: SCREEN_TOP, left: SCREEN_LEFT,
+        transform: SCREEN_TRANSFORM,
+        transformOrigin: 'center center',
+        pointerEvents: 'none',
+        zIndex: 12,
+        overflow: 'visible',
+      }}
+    >
+      {/* Full lit border — only when all modules loaded */}
+      {intense && (
+        <rect x="0.5" y="0.5" width={W} height={H} rx={SCREEN_RADIUS}
+          fill="none" stroke="rgba(0,212,255,0.30)" strokeWidth="1" />
+      )}
+      {/* Traveling comet — 80px segment during loading, full loop when intense */}
+      <rect x="0.5" y="0.5" width={W} height={H} rx={SCREEN_RADIUS}
+        fill="none"
+        stroke="#00d4ff"
+        strokeWidth={intense ? 1.5 : 1.5}
+        strokeLinecap="round"
+        strokeDasharray={`${cometLen} ${SCREEN_PERIM - cometLen + 1}`}
+        style={{
+          animation: `borderTrace ${intense ? 1.8 : 3}s linear infinite`,
+          filter: intense
+            ? 'drop-shadow(0 0 4px #00d4ff) drop-shadow(0 0 8px rgba(0,212,255,0.6))'
+            : 'drop-shadow(0 0 3px #00d4ff)',
+        }}
+      />
+    </svg>
+  );
+}
+
 /* ── Terminal image + screen overlay ── */
 function TerminalInner({ activeState, time, intense, pulseRef }) {
   return (
     <div style={{ position: 'relative', width: TERMINAL_WIDTH }}>
+      {/* Soft glow behind terminal */}
+      <div style={{
+        position: 'absolute',
+        left: '50%', top: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: '130%', height: '110%',
+        background: 'radial-gradient(ellipse at center, rgba(0,212,255,0.10) 0%, transparent 70%)',
+        pointerEvents: 'none',
+        zIndex: 0,
+      }} />
+      {/* Deep blue box-shadow glow */}
+      <div style={{
+        position: 'absolute',
+        left: '50%', top: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 300, height: 300,
+        borderRadius: '50%',
+        background: 'transparent',
+        boxShadow: '0 0 160px 60px rgba(0, 100, 255, 0.18)',
+        pointerEvents: 'none',
+        zIndex: 0,
+      }} />
+      {/* Spinning neon ring — zero-size anchor at terminal center */}
+      <div style={{ position: 'absolute', left: '50%', top: '50%', width: 0, height: 0, pointerEvents: 'none', zIndex: 2 }}>
+        <svg
+          width={TERMINAL_WIDTH + 60}
+          height={600}
+          style={{
+            position: 'absolute',
+            left: -(TERMINAL_WIDTH + 60) / 2,
+            top: -300,
+            animation: 'spin 3s linear infinite',
+            transformOrigin: 'center center',
+          }}
+          overflow="visible"
+        >
+          <ellipse
+            cx={(TERMINAL_WIDTH + 60) / 2} cy={300}
+            rx={(TERMINAL_WIDTH + 60) / 2 - 2} ry={298}
+            fill="none"
+            stroke="rgba(0,212,255,0.7)"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeDasharray="100 1819"
+            style={{ filter: 'drop-shadow(0 0 5px rgba(0,212,255,0.9))' }}
+          />
+        </svg>
+      </div>
       <img
         src={`${import.meta.env.BASE_URL}${TERMINAL_IMG}`}
         alt="PayPOS Terminal"
@@ -569,7 +708,6 @@ function TerminalInner({ activeState, time, intense, pulseRef }) {
         transition: 'box-shadow 0.6s ease',
       }}>
         <ScreenContent state={activeState} time={time} />
-        {/* Flash overlay — remounts on state change to re-trigger the CSS animation */}
         <div
           key={activeState}
           className="pp-flash"
@@ -581,11 +719,12 @@ function TerminalInner({ activeState, time, intense, pulseRef }) {
         />
         <div ref={pulseRef} style={S.screenPulse} />
       </div>
+      <ScreenBorder intense={intense} />
     </div>
   );
 }
 
-/* Mobile entry — used by mobile branch */
+/* Mobile entry */
 function TerminalWithScreen({ activeState, time, scale = 1 }) {
   const intense = activeState === 6;
   return (
@@ -594,6 +733,7 @@ function TerminalWithScreen({ activeState, time, scale = 1 }) {
       width: TERMINAL_WIDTH,
       transform: `scale(${scale})`,
       transformOrigin: 'center top',
+      animation: 'terminalFloat 3s ease-in-out infinite',
     }}>
       <TerminalInner activeState={activeState} time={time} intense={intense} pulseRef={{ current: null }} />
     </div>
@@ -610,13 +750,21 @@ function GlobalStyles() {
         0%, 100% { transform: translateY(0px); }
         50%       { transform: translateY(-9px); }
       }
+      @keyframes terminalFloat {
+        0%, 100% { transform: translateY(0px); }
+        50%       { transform: translateY(-8px); }
+      }
       @keyframes eyebrowIn {
         from { opacity: 0; transform: translateY(10px); }
         to   { opacity: 1; transform: translateY(0); }
       }
-      @keyframes pp-scanline {
-        0%   { transform: translateX(-100%); }
-        100% { transform: translateX(266%); }
+      @keyframes borderTrace {
+        from { stroke-dashoffset: 1254; }
+        to   { stroke-dashoffset: 0; }
+      }
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
       }
       @keyframes pp-flash {
         0%   { opacity: 0; }
@@ -631,8 +779,16 @@ function GlobalStyles() {
         0%, 100% { opacity: 1; transform: scale(1); }
         50%      { opacity: 0.4; transform: scale(0.7); }
       }
+      @keyframes atmoBreath {
+        0%, 100% { opacity: 0.8; }
+        50%       { opacity: 1; }
+      }
 
       .pp-eyebrow { animation: eyebrowIn 0.6s ease both; }
+      .pp-cta-btn:hover {
+        transform: scale(1.03);
+        box-shadow: 0 0 30px rgba(0,212,255,0.4);
+      }
       .pp-flash {
         position: absolute; inset: 0;
         pointer-events: none;
@@ -663,7 +819,7 @@ const S = {
     position: 'absolute', zIndex: 1, pointerEvents: 'none',
     width: 300, height: 300, borderRadius: '50%',
     background: 'radial-gradient(circle, rgba(0,180,255,0.20) 0%, transparent 70%)',
-    right: `calc(13% + ${THW - 150}px)`,
+    right: `calc(12% + ${THW - 150}px)`,
     top: 'calc(50% - 150px)',
   },
   textBlock: {
@@ -680,7 +836,7 @@ const S = {
     opacity: 0.5,
   },
   h1: {
-    fontSize: 'clamp(48px,5.5vw,80px)', fontWeight: 800,
+    fontSize: 'clamp(38px,4.5vw,64px)', fontWeight: 800,
     color: '#fff', lineHeight: 1.05, margin: 0,
   },
   gradientH1: {
@@ -690,7 +846,7 @@ const S = {
     backgroundClip: 'text',
   },
   subtitle: {
-    color: 'rgba(255,255,255,0.6)', fontSize: 17, lineHeight: 1.65, maxWidth: 400,
+    color: 'rgba(255,255,255,0.55)', fontSize: 15, lineHeight: 1.6, maxWidth: 380,
   },
   glowAtmo: {
     position: 'absolute',
@@ -704,6 +860,21 @@ const S = {
   svgLines: {
     position: 'absolute', left: 0, top: 0,
     pointerEvents: 'none', zIndex: 3,
+  },
+  atmo3: {
+    position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
+    background: 'radial-gradient(ellipse at 65% 50%, rgba(0,80,255,0.12) 0%, transparent 60%)',
+    animation: 'atmoBreath 4s ease-in-out infinite',
+  },
+  ctaBtn: {
+    display: 'inline-block',
+    background: '#00d4ff', color: '#000', fontWeight: 700,
+    borderRadius: 100, padding: '14px 28px', border: 'none',
+    fontSize: 15, letterSpacing: '0.02em',
+    cursor: 'pointer', fontFamily: 'Manrope, sans-serif',
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    willChange: 'transform',
+    alignSelf: 'flex-start',
   },
   screenPulse: {
     position: 'absolute', inset: 0,
@@ -722,6 +893,7 @@ const S = {
     boxShadow:           '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.10)',
     willChange:          'transform',
     whiteSpace:          'nowrap',
+    minWidth:            140,
   },
   iconBox: {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -729,6 +901,6 @@ const S = {
     borderRadius: 10, padding: 8, flexShrink: 0,
   },
   cardLabel: {
-    color: '#fff', fontWeight: 600, fontSize: 13, letterSpacing: '0.02em',
+    color: '#fff', fontWeight: 600, fontSize: 14, letterSpacing: '0.02em',
   },
 };

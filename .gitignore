@@ -30,3 +30,6 @@ Thumbs.db
 
 # Test coverage
 coverage/
+
+# Lock files (CI uses npm install)
+package-lock.json
