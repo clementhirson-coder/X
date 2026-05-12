@@ -43,8 +43,8 @@ export default function Navbar() {
         ref={navRef}
         style={{
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
-          height: 64,
-          padding: '0 48px',
+          height: 80,
+          padding: '0 60px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
@@ -56,20 +56,20 @@ export default function Navbar() {
       >
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center' }} data-cursor="hover">
-          <span style={{ color: '#fff', fontWeight: 800, fontSize: 20, letterSpacing: '0.05em' }}>
+          <span style={{ color: '#fff', fontWeight: 800, fontSize: 25, letterSpacing: '0.05em' }}>
             PAYPOS
           </span>
           <span style={{
             display: 'inline-block',
-            width: 5, height: 5, borderRadius: '50%',
+            width: 6, height: 6, borderRadius: '50%',
             background: '#00d4ff',
             boxShadow: '0 0 8px #00d4ff',
-            marginLeft: 3, marginBottom: 6,
+            marginLeft: 4, marginBottom: 8,
           }} />
         </div>
 
         {/* Desktop nav links */}
-        <div className="pp-nav-links" style={{ display: 'flex', gap: 40, alignItems: 'center' }}>
+        <div className="pp-nav-links" style={{ display: 'flex', gap: 50, alignItems: 'center' }}>
           {NAV_LINKS.map(link => (
             <a
               key={link.label}
@@ -78,12 +78,12 @@ export default function Navbar() {
               onClick={() => setActiveLink(link.label)}
               className={`pp-nav-link${activeLink === link.label ? ' pp-nav-link--active' : ''}`}
               style={{
-                fontSize: 13, fontWeight: 500,
+                fontSize: 16, fontWeight: 500,
                 color: activeLink === link.label ? '#fff' : 'rgba(255,255,255,0.6)',
                 letterSpacing: '0.02em',
                 textDecoration: 'none',
                 position: 'relative',
-                paddingBottom: 4,
+                paddingBottom: 5,
               }}
             >
               {link.label}
@@ -102,8 +102,8 @@ export default function Navbar() {
           background: 'transparent',
           border: '1px solid rgba(0,212,255,0.4)',
           color: '#00d4ff',
-          fontSize: 13, fontWeight: 600,
-          borderRadius: 100, padding: '10px 22px',
+          fontSize: 16, fontWeight: 600,
+          borderRadius: 100, padding: '12px 28px',
           fontFamily: 'Manrope, sans-serif',
         }}>
           Demander une démo
@@ -115,11 +115,11 @@ export default function Navbar() {
           onClick={() => setMobileOpen(true)}
           style={{
             background: 'none', border: 'none',
-            display: 'none', flexDirection: 'column', gap: 5, padding: 8,
+            display: 'none', flexDirection: 'column', gap: 6, padding: 10,
           }}
         >
           {[0, 1, 2].map(i => (
-            <span key={i} style={{ display: 'block', width: 22, height: 2, background: '#fff', borderRadius: 2 }} />
+            <span key={i} style={{ display: 'block', width: 28, height: 2, background: '#fff', borderRadius: 2 }} />
           ))}
         </button>
       </nav>

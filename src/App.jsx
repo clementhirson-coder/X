@@ -7,7 +7,7 @@ export default function App() {
     <>
       <CustomCursor />
       <Navbar />
-      <main style={{ paddingTop: 64 }}>
+      <main style={{ paddingTop: 80 }}>
         <PayPOSHero />
       </main>
     </>
