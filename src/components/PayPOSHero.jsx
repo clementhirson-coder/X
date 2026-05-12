@@ -78,7 +78,6 @@ function ProductIcon({ id, size = 24, color }) {
       return (
         <svg {...common}>
           <circle cx="16" cy="16" r="13" stroke={c} strokeWidth="2" />
-          <circle cx="6" cy="10.5" r="0.6" fill="currentColor" />
           <path d="M9 11l3 10 4-7 4 7 3-10"
             stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
@@ -221,12 +220,11 @@ function ScreenContent({ state, time }) {
     return (
       <div style={inner}>
         <ScreenStatusBar time={time} dim />
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#00d4ff', boxShadow: '0 0 8px #00d4ff' }} />
-            <div style={{ color: '#fff', fontSize: 14, fontWeight: 700, letterSpacing: '0.12em' }}>PAYPOS</div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#00d4ff', boxShadow: '0 0 8px #00d4ff', flexShrink: 0 }} />
+            <div style={{ color: '#fff', fontSize: 28, fontWeight: 800, letterSpacing: '0.1em' }}>PAYPOS</div>
           </div>
-          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, letterSpacing: '0.06em' }}>{time}</div>
         </div>
       </div>
     );
@@ -369,10 +367,11 @@ export default function PayPOSHero() {
             onUpdate: (self) => {
               let changed = false;
               PRODUCTS.forEach((p, i) => {
-                const on  = ((i + 1) * STEP) / TOTAL;
-                const off = (i       * STEP) / TOTAL;
-                if (self.progress >= on  && !absorbedRef.current.has(p.id)) { absorbedRef.current.add(p.id);    changed = true; }
-                if (self.progress <  off &&  absorbedRef.current.has(p.id)) { absorbedRef.current.delete(p.id); changed = true; }
+                const threshold = ((i + 1) * STEP) / TOTAL;
+                const shouldBeOn = self.progress >= threshold;
+                const isOn = absorbedRef.current.has(p.id);
+                if (shouldBeOn && !isOn)  { absorbedRef.current.add(p.id);    changed = true; }
+                if (!shouldBeOn && isOn)  { absorbedRef.current.delete(p.id); changed = true; }
               });
               if (changed) setAbsorbedIds(new Set(absorbedRef.current));
             },
