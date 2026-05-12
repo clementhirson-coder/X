@@ -8,12 +8,12 @@ const TW   = 391;      // terminal width = 340 * 1.15
 const THW  = TW / 2;  // half terminal width = 195.5
 
 const PRODUCTS = [
-  { id: 'paybylink', label: 'PayByLink',     icon: '🔗', ox: -280, oy:  -80 },
-  { id: 'bnpl',      label: 'BNPL & Credit', icon: '💳', ox:  220, oy:  -60 },
-  { id: 'wero',      label: 'Wero',           icon: '⚡',       ox: -300, oy:   60 },
-  { id: 'noshow',    label: 'NoShow',         icon: '🛡️', ox: 240, oy: 80 },
-  { id: 'crypto',    label: 'Crypto',         icon: '₿',       ox: -220, oy:  180 },
-  { id: 'a2a',       label: 'A2A & Wallets',  icon: '🏦', ox:  200, oy:  160 },
+  { id: 'paybylink', label: 'PayByLink',     color: '#00d4ff', ox: -280, oy:  -80 },
+  { id: 'bnpl',      label: 'BNPL & Credit', color: '#a855f7', ox:  220, oy:  -60 },
+  { id: 'wero',      label: 'Wero',          color: '#6366f1', ox: -300, oy:   60 },
+  { id: 'noshow',    label: 'NoShow',        color: '#10b981', ox:  240, oy:   80 },
+  { id: 'crypto',    label: 'Crypto',        color: '#f7931a', ox: -220, oy:  180 },
+  { id: 'a2a',       label: 'A2A & Wallets', color: '#3b82f6', ox:  200, oy:  160 },
 ];
 
 const PARTICLES = [
@@ -34,6 +34,99 @@ const PARTICLES = [
 const STEP      = 1.2;
 const TOTAL     = PRODUCTS.length * STEP + 1;
 const SCROLL_PX = 140;
+
+/* ── Inline SVG icons, one per product, all 32×32 viewBox ── */
+function ProductIcon({ id, size = 32 }) {
+  const common = { width: size, height: size, viewBox: '0 0 32 32', fill: 'none' };
+  switch (id) {
+    case 'paybylink':
+      return (
+        <svg {...common}>
+          <path d="M13 17a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"
+            stroke="#00d4ff" strokeWidth="2" strokeLinecap="round" />
+          <path d="M19 15a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"
+            stroke="#00d4ff" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      );
+    case 'bnpl':
+      return (
+        <svg {...common}>
+          <rect x="3" y="8" width="26" height="18" rx="3" stroke="#a855f7" strokeWidth="2" />
+          <path d="M3 13h26" stroke="#a855f7" strokeWidth="2" />
+          <path d="M8 19h4M8 22h6" stroke="#a855f7" strokeWidth="2" strokeLinecap="round" />
+          <path d="M22 19l-3 3M25 19l-3 3" stroke="#a855f7" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      );
+    case 'wero':
+      return (
+        <svg {...common}>
+          <circle cx="16" cy="16" r="13" stroke="#6366f1" strokeWidth="2" />
+          <path d="M9 11l3 10 4-7 4 7 3-10"
+            stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case 'noshow':
+      return (
+        <svg {...common}>
+          <path d="M16 3L4 8v8c0 7 5.4 11.9 12 14 6.6-2.1 12-7 12-14V8L16 3z"
+            stroke="#10b981" strokeWidth="2" strokeLinejoin="round" />
+          <path d="M11 16l3 3 7-7"
+            stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
+    case 'crypto':
+      return (
+        <svg {...common}>
+          <circle cx="16" cy="16" r="13" stroke="#f7931a" strokeWidth="2" />
+          <path d="M13 10h6a3 3 0 010 6h-6m0 0h7a3 3 0 010 6h-7m0-12v12m2-14v2m3-2v2m-3 12v2m3-2v2"
+            stroke="#f7931a" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      );
+    case 'a2a':
+      return (
+        <svg {...common}>
+          <circle cx="8"  cy="16" r="5" stroke="#3b82f6" strokeWidth="2" />
+          <circle cx="24" cy="16" r="5" stroke="#3b82f6" strokeWidth="2" />
+          <path d="M13 13l6-3M13 19l6 3" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
+/* Hex-alpha helpers — append 2-digit alpha (00–FF) to a 6-digit hex */
+const a08 = (c) => `${c}14`; //  ~8%
+const a12 = (c) => `${c}1F`; // ~12%
+const a25 = (c) => `${c}40`; // ~25%
+
+function brandedCardStyle(color, extra = {}) {
+  return {
+    ...S.card,
+    background: `linear-gradient(135deg, ${a08(color)}, transparent)`,
+    border: `1px solid ${a25(color)}`,
+    ...extra,
+  };
+}
+
+function brandedIconBoxStyle(color, extra = {}) {
+  return {
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: a12(color),
+    borderRadius: 12, padding: 8, flexShrink: 0,
+    ...extra,
+  };
+}
+
+function brandDotStyle(color) {
+  return {
+    position: 'absolute',
+    top: 10, right: 10,
+    width: 5, height: 5, borderRadius: '50%',
+    background: color,
+    boxShadow: `0 0 6px ${color}`,
+  };
+}
 
 export default function PayPOSHero() {
   const sectionRef  = useRef(null);
@@ -146,11 +239,12 @@ export default function PayPOSHero() {
         <img src={`${import.meta.env.BASE_URL}devices6.png`} alt="PayPOS Terminal" style={{ width: 240, mixBlendMode: 'screen' }} />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, width: '100%' }}>
           {PRODUCTS.map(p => (
-            <div key={p.id} style={{ ...S.card, borderRadius: 14, padding: '11px 14px' }}>
-              <div style={{ ...S.iconBox, borderRadius: 8, padding: 6 }}>
-                <span style={{ fontSize: 16 }}>{p.icon}</span>
+            <div key={p.id} style={brandedCardStyle(p.color, { borderRadius: 14, padding: '11px 14px' })}>
+              <div style={brandedIconBoxStyle(p.color, { borderRadius: 8, padding: 6 })}>
+                <ProductIcon id={p.id} size={20} />
               </div>
               <span style={{ ...S.cardLabel, fontSize: 12 }}>{p.label}</span>
+              <span style={brandDotStyle(p.color)} />
             </div>
           ))}
         </div>
@@ -204,7 +298,7 @@ export default function PayPOSHero() {
         width: 0, height: 0,
       }}>
 
-        {/* Glow atmosphere — GSAP target for absorption pulse (centered on terminal via -260 offset) */}
+        {/* Glow atmosphere — GSAP target for absorption pulse */}
         <div ref={glowRef} style={S.glowAtmo} />
 
         {/* SVG connecting lines from each card to terminal center */}
@@ -227,7 +321,7 @@ export default function PayPOSHero() {
           ))}
         </svg>
 
-        {/* Terminal centering wrapper (translateY-50% only — GSAP on inner div) */}
+        {/* Terminal centering wrapper */}
         <div style={{
           position: 'absolute',
           left: -THW, top: 0,
@@ -236,20 +330,20 @@ export default function PayPOSHero() {
         }}>
           {/* GSAP-controlled: floating animation */}
           <div ref={terminalRef} style={{ willChange: 'transform', position: 'relative', zIndex: 6 }}>
-            {/* Glow ring inside terminal — floats with it */}
             <div style={S.glowRing} />
-            {/* Screen flash overlay — lit up by GSAP on each absorption */}
             <div ref={pulseRef} style={S.screenPulse} />
             <img
               src={`${import.meta.env.BASE_URL}devices6.png`}
               alt="PayPOS Terminal"
               style={{ width: '100%', height: 'auto', mixBlendMode: 'screen', display: 'block', position: 'relative', zIndex: 1 }}
             />
-            {/* Icons absorbed into terminal */}
+            {/* Icons absorbed into terminal screen */}
             {absorbedIds.size > 0 && (
               <div style={S.absorbedOverlay}>
                 {PRODUCTS.filter(p => absorbedIds.has(p.id)).map(p => (
-                  <span key={p.id} style={S.absorbedIcon}>{p.icon}</span>
+                  <span key={p.id} style={S.absorbedIcon}>
+                    <ProductIcon id={p.id} size={22} />
+                  </span>
                 ))}
               </div>
             )}
@@ -267,43 +361,13 @@ export default function PayPOSHero() {
               zIndex: 8,
             }}
           >
-            {/* inner div = GSAP target (no initial CSS transform) */}
-            <div ref={el => { cardRefs.current[i] = el; }} style={S.card}>
-              <div style={S.iconBox}>
-                <span style={{ fontSize: 18, lineHeight: 1 }}>{p.icon}</span>
+            <div ref={el => { cardRefs.current[i] = el; }} style={brandedCardStyle(p.color, { minWidth: 160 })}>
+              <div style={brandedIconBoxStyle(p.color)}>
+                <ProductIcon id={p.id} size={32} />
               </div>
               <span style={S.cardLabel}>{p.label}</span>
+              <span style={brandDotStyle(p.color)} />
             </div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-/* ── Mobile fallback ── */
-function MobileHero() {
-  return (
-    <section style={{ ...S.root, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32, padding: '80px 24px', overflow: 'visible' }}>
-      <GlobalStyles />
-      <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <span style={S.eyebrow} className="pp-eyebrow">Next-Gen Payment Terminal</span>
-        <div style={S.eyebrowLine} />
-        <h1 style={{ ...S.h1, fontSize: 'clamp(36px,10vw,56px)' }}>
-          <span style={S.gradientH1}>One Terminal.</span><br />Every Payment.
-        </h1>
-        <p style={S.subtitle}>
-          PayPOS centralise tous vos moyens de paiement en un seul terminal Android.
-        </p>
-      </div>
-      <img src={`${import.meta.env.BASE_URL}devices6.png`} alt="PayPOS Terminal" style={{ width: 240, mixBlendMode: 'screen' }} />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, width: '100%' }}>
-        {PRODUCTS.map(p => (
-          <div key={p.id} style={{ ...S.card, borderRadius: 14, padding: '11px 14px' }}>
-            <div style={{ ...S.iconBox, borderRadius: 8, padding: 6 }}>
-              <span style={{ fontSize: 16 }}>{p.icon}</span>
-            </div>
-            <span style={{ ...S.cardLabel, fontSize: 12 }}>{p.label}</span>
           </div>
         ))}
       </div>
@@ -350,7 +414,6 @@ const S = {
     position: 'absolute', zIndex: 1, pointerEvents: 'none',
     width: 300, height: 300, borderRadius: '50%',
     background: 'radial-gradient(circle, rgba(0,180,255,0.20) 0%, transparent 70%)',
-    /* centered on terminal: right offset = 13% + HW - 150  */
     right: `calc(13% + ${THW - 150}px)`,
     top: 'calc(50% - 150px)',
   },
@@ -380,7 +443,6 @@ const S = {
   subtitle: {
     color: 'rgba(255,255,255,0.6)', fontSize: 17, lineHeight: 1.65, maxWidth: 400,
   },
-  /* Glow: positioned with left/top (no CSS transform) so GSAP scale has no conflict */
   glowAtmo: {
     position: 'absolute',
     width: 520, height: 520, left: -260, top: -260,
@@ -416,26 +478,20 @@ const S = {
     gap: 8, zIndex: 7,
   },
   absorbedIcon: {
-    fontSize: 22,
+    display: 'inline-flex',
     animation: 'popIn 0.3s cubic-bezier(0.175,0.885,0.32,1.275) both',
   },
+  /* Base card — branded color is layered on top via brandedCardStyle() */
   card: {
     display: 'flex', alignItems: 'center', gap: 12,
-    background:          'rgba(255,255,255,0.04)',
-    border:              '1px solid rgba(255,255,255,0.12)',
-    borderTopColor:      'rgba(0,212,255,0.3)',
     backdropFilter:      'blur(20px)',
     WebkitBackdropFilter:'blur(20px)',
     borderRadius:        20,
-    padding:             '14px 20px',
-    boxShadow:           '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.10)',
+    padding:             '14px 18px',
+    boxShadow:           '0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.06)',
     willChange:          'transform',
     whiteSpace:          'nowrap',
-  },
-  iconBox: {
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: 'rgba(0,212,255,0.10)',
-    borderRadius: 10, padding: 8, flexShrink: 0,
+    position:            'relative',
   },
   cardLabel: {
     color: '#fff', fontWeight: 600, fontSize: 13, letterSpacing: '0.02em',
