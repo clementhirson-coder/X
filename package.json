@@ -1,0 +1,21 @@
+{
+  "name": "paypos",
+  "version": "1.0.0",
+  "description": "Modern point-of-sale web application",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "lint": "eslint .",
+    "test": "jest"
+  },
+  "keywords": ["pos", "payment", "caisse", "retail"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "nodemon": "^3.1.0",
+    "eslint": "^9.0.0",
+    "jest": "^29.0.0"
+  }
+}
