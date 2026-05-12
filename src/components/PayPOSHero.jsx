@@ -111,7 +111,32 @@ export default function PayPOSHero() {
     return () => { clearTimeout(timer); ctx?.revert(); };
   }, [isMobile]);
 
-  if (isMobile) return <MobileHero />;
+  /* ─────────────────── Mobile layout ─────────────────── */
+  if (isMobile) {
+    return (
+      <section style={S.root}>
+        <FontImport />
+        <div style={S.mobileInner}>
+          <div style={S.mobileText}>
+            <Eyebrow />
+            <h1 style={S.h1Mobile}>One Terminal.<br />Every Payment.</h1>
+            <p style={S.subtitle}>
+              PayPOS centralise tous vos moyens de paiement en un seul terminal Android.
+            </p>
+          </div>
+          <img src={`${import.meta.env.BASE_URL}devices6.png`} alt="PayPOS Terminal" style={S.terminalImgMobile} />
+          <div style={S.mobileGrid}>
+            {PRODUCTS.map(p => (
+              <div key={p.id} style={{ ...S.card, borderRadius: 12, padding: '12px 16px' }}>
+                <span style={{ fontSize: 20 }}>{p.icon}</span>
+                <span style={{ ...S.cardLabel, fontSize: 12 }}>{p.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section ref={sectionRef} style={S.root}>
@@ -159,8 +184,25 @@ export default function PayPOSHero() {
         width: 0, height: 0,
       }}>
 
-        {/* Atmosphere glow — GSAP scale target (no CSS transform = no conflict) */}
-        <div ref={glowRef} style={S.glowAtmo} />
+      {/* Terminal positioning wrapper (CSS-only, no GSAP) */}
+      <div style={S.terminalWrapper}>
+        {/* GSAP-controlled inner div (floating animation) */}
+        <div ref={terminalRef} style={{ width: 340, willChange: 'transform', position: 'relative' }}>
+          <img
+            src={`${import.meta.env.BASE_URL}devices6.png`}
+            alt="PayPOS Terminal"
+            style={S.terminalImgDesktop}
+          />
+          {/* Icons absorbed into terminal screen */}
+          {absorbedIds.size > 0 && (
+            <div style={S.absorbedOverlay}>
+              {PRODUCTS.filter(p => absorbedIds.has(p.id)).map(p => (
+                <span key={p.id} style={S.absorbedIcon}>{p.icon}</span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
         {/* SVG connecting lines from each card to terminal center */}
         <svg width="0" height="0" style={S.svgLines} overflow="visible">
