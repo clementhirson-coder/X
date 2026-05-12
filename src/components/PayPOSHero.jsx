@@ -413,7 +413,7 @@ function ScreenBorder({ intense }) {
 /* ── Terminal image + screen overlay ── */
 function TerminalInner({ activeState, time, intense, pulseRef }) {
   return (
-    <div style={{ position: 'relative', width: TERMINAL_WIDTH }}>
+    <div style={{ position: 'relative', width: TERMINAL_WIDTH, overflow: 'hidden' }}>
       <img
         src={`${import.meta.env.BASE_URL}${TERMINAL_IMG}`}
         alt="PayPOS Terminal"
@@ -764,8 +764,8 @@ export default function PayPOSHero() {
               position: 'absolute',
               top: cardLayout.rowMids[row] - CARD_H_EST / 2,
               ...(isLeft
-                ? { right: cardLayout.sectionWidth - cardLayout.scrLeft + 16 }
-                : { left: cardLayout.scrRight + 16 }
+                ? { right: cardLayout.sectionWidth - cardLayout.scrLeft + 32 }
+                : { left: cardLayout.scrRight + 32 }
               ),
               zIndex: 8,
             }}
@@ -881,7 +881,7 @@ const S = {
     fontFamily: 'Manrope, sans-serif',
     position: 'relative',
     minHeight: '100vh',
-    overflow: 'clip',
+    overflow: 'hidden',
   },
   atmo1: {
     position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
@@ -893,7 +893,7 @@ const S = {
     animation: 'atmoBreath 4s ease-in-out infinite',
   },
   textBlock: {
-    position: 'absolute', left: '6%', top: '50%', transform: 'translateY(-50%)',
+    position: 'absolute', left: '6%', top: '50%', transform: 'translateY(calc(-50% - 18px))',
     zIndex: 10, display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 460,
   },
   eyebrow: {
