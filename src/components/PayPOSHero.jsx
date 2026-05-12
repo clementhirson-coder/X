@@ -5,32 +5,33 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 gsap.registerPlugin(ScrollTrigger);
 
 /* ──────────────────────────────────────────────────────────────
-   TERMINAL — single Verifone device, image already pre-cropped.
-   public/terminal.png is 580×1140 natural; we display it at TW wide
-   and the height scales proportionally.
+   TERMINAL — Verifone product photo, transparent bg, screen black.
+   terminal-photo.png is 1020×966 native; displayed at TW wide
+   (height scales proportionally → 480×456 displayed).
    ───────────────────────────────────────────────────────────── */
-const TERMINAL_WIDTH = 340;     // display width of the terminal device
-const TERMINAL_IMG   = 'terminal.png';
+const TERMINAL_WIDTH = 480;
+const TERMINAL_IMG   = 'terminal-photo.png';
 
 /* ──────────────────────────────────────────────────────────────
-   FAKE SCREEN OVERLAY — calibrated for terminal.png at TW=340.
-   Pixel-measured: screen spans orig x≈111-436, y≈170-842 → scaled.
+   FAKE SCREEN OVERLAY — locked values from design handoff.
+   Transform matches the terminal's perspective angle in the photo.
    ───────────────────────────────────────────────────────────── */
-const SCREEN_LEFT   = 65;
-const SCREEN_TOP    = 100;
-const SCREEN_WIDTH  = 190;
-const SCREEN_HEIGHT = 394;
-const SCREEN_RADIUS = 14;
+const SCREEN_LEFT   = 180;
+const SCREEN_TOP    = 39;
+const SCREEN_WIDTH  = 154;
+const SCREEN_HEIGHT = 381;
+const SCREEN_RADIUS = 7;
+const SCREEN_TRANSFORM = 'perspective(420px) rotateY(5.5deg) rotateX(-0.5deg)';
 
 const THW = TERMINAL_WIDTH / 2;
 
 const PRODUCTS = [
-  { id: 'paybylink', label: 'PayByLink',     short: 'PAY-BY-LINK', color: '#00d4ff', ox: -280, oy:  -80 },
-  { id: 'bnpl',      label: 'BNPL & Credit', short: 'BNPL',        color: '#a855f7', ox:  220, oy:  -60 },
-  { id: 'wero',      label: 'Wero',          short: 'WERO',        color: '#6366f1', ox: -300, oy:   60 },
-  { id: 'noshow',    label: 'NoShow',        short: 'NOSHOW',      color: '#10b981', ox:  240, oy:   80 },
-  { id: 'crypto',    label: 'Crypto',        short: 'CRYPTO',      color: '#f7931a', ox: -220, oy:  180 },
-  { id: 'a2a',       label: 'A2A & Wallets', short: 'A2A',         color: '#3b82f6', ox:  200, oy:  160 },
+  { id: 'paybylink', label: 'PayByLink',     short: 'PAY-BY-LINK', color: '#00d4ff', ox: -330, oy:  -90 },
+  { id: 'bnpl',      label: 'BNPL & Credit', short: 'BNPL',        color: '#a855f7', ox:  280, oy:  -70 },
+  { id: 'wero',      label: 'Wero',          short: 'WERO',        color: '#6366f1', ox: -360, oy:   70 },
+  { id: 'noshow',    label: 'NoShow',        short: 'NOSHOW',      color: '#10b981', ox:  300, oy:   90 },
+  { id: 'crypto',    label: 'Crypto',        short: 'CRYPTO',      color: '#f7931a', ox: -270, oy:  200 },
+  { id: 'a2a',       label: 'A2A & Wallets', short: 'A2A',         color: '#3b82f6', ox:  260, oy:  180 },
 ];
 
 const PARTICLES = [
@@ -134,32 +135,50 @@ function ScreenStatusBar({ time, dim = false }) {
 
 function ScreenHeader({ time }) {
   return (
-    <div style={{
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      padding: '6px 12px',
-      borderBottom: '1px solid rgba(255,255,255,0.06)',
-      color: 'rgba(255,255,255,0.6)',
-      fontSize: 8, fontWeight: 700, letterSpacing: '0.18em',
-    }}>
-      <span>PAYPOS</span>
-      <span style={{ letterSpacing: '0.08em' }}>{time}</span>
-    </div>
+    <>
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '6px 10px 5px',
+        color: 'rgba(255,255,255,0.55)',
+        fontSize: 11, fontWeight: 600,
+      }}>
+        <span style={{ letterSpacing: '0.08em' }}>{time}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+            <path d="M1 4.2a8 8 0 0110 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+            <path d="M2.7 6.6a5 5 0 016.6 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+            <path d="M4.2 9a2 2 0 013.6 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+            <circle cx="6" cy="10.5" r="0.6" fill="currentColor" />
+          </svg>
+          <svg width="16" height="9" viewBox="0 0 16 9" fill="none">
+            <rect x="0.5" y="0.5" width="12" height="8" rx="1.5" stroke="currentColor" />
+            <rect x="2" y="2" width="8" height="5" fill="currentColor" />
+            <rect x="13" y="3" width="1.6" height="3" fill="currentColor" />
+          </svg>
+        </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '4px 0 9px' }}>
+        <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#00d4ff', boxShadow: '0 0 8px #00d4ff' }} />
+        <span style={{ color: '#fff', fontSize: 14, fontWeight: 700, letterSpacing: '0.12em' }}>PAYPOS · {time}</span>
+      </div>
+      <div style={{ height: 1, margin: '0 10px', background: 'linear-gradient(90deg, transparent, rgba(0,212,255,0.3), transparent)' }} />
+    </>
   );
 }
 
 function ScreenCell({ id, featured = false }) {
   const p = PRODUCTS.find(x => x.id === id);
   if (!p) return null;
-  const iconSize  = featured ? 48 : 32;
-  const labelSize = featured ? 10 : 8;
+  const iconSize  = featured ? 36 : 24;
+  const labelSize = featured ? 9 : 8;
   return (
     <div className="pp-cell" style={{
       background: `${p.color}1A`,
-      borderRadius: 14,
+      borderRadius: 8,
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      gap: featured ? 8 : 4,
-      padding: featured ? '14px 8px' : '6px',
+      gap: featured ? 6 : 4,
+      padding: featured ? '10px 6px' : '9px 6px 8px',
       flex: 1, minHeight: 0,
       willChange: 'transform',
     }}>
@@ -173,7 +192,7 @@ function ScreenCell({ id, featured = false }) {
 }
 
 function Placeholder() {
-  return <div style={{ height: 42, borderRadius: 8, background: 'rgba(255,255,255,0.05)' }} />;
+  return <div style={{ height: 36, borderRadius: 8, background: 'rgba(255,255,255,0.05)' }} />;
 }
 
 /* ── Screen content per state ───────────────────────────── */
@@ -191,8 +210,11 @@ function ScreenContent({ state, time }) {
       <div style={inner}>
         <ScreenStatusBar time={time} dim />
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-          <div style={{ color: '#fff', fontSize: 18, fontWeight: 700, letterSpacing: '0.12em' }}>PAYPOS</div>
-          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, letterSpacing: '0.06em' }}>{time}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#00d4ff', boxShadow: '0 0 8px #00d4ff' }} />
+            <div style={{ color: '#fff', fontSize: 14, fontWeight: 700, letterSpacing: '0.12em' }}>PAYPOS</div>
+          </div>
+          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, letterSpacing: '0.06em' }}>{time}</div>
         </div>
         <div style={{ position: 'relative', height: 2, overflow: 'hidden' }}>
           <div style={{
@@ -209,7 +231,7 @@ function ScreenContent({ state, time }) {
     return (
       <div style={inner}>
         <ScreenHeader time={time} />
-        <div style={{ padding: '10px 10px 6px', flex: '0 0 42%', display: 'flex' }}>
+        <div style={{ padding: '8px 10px 6px', flex: '0 0 40%', display: 'flex' }}>
           <ScreenCell id="paybylink" featured />
         </div>
         <div style={{ padding: '0 10px 10px', display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
@@ -223,7 +245,7 @@ function ScreenContent({ state, time }) {
     return (
       <div style={inner}>
         <ScreenHeader time={time} />
-        <div style={{ padding: '10px 10px 6px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, flex: '0 0 30%' }}>
+        <div style={{ padding: '8px 10px 6px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, flex: '0 0 28%' }}>
           <ScreenCell id="paybylink" />
           <ScreenCell id="bnpl" />
         </div>
@@ -238,7 +260,7 @@ function ScreenContent({ state, time }) {
     return (
       <div style={inner}>
         <ScreenHeader time={time} />
-        <div style={{ padding: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gridAutoRows: '1fr', gap: 6, flex: 1 }}>
+        <div style={{ padding: '8px 10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gridAutoRows: '1fr', gap: 8, flex: 1 }}>
           <ScreenCell id="paybylink" />
           <ScreenCell id="bnpl" />
           <ScreenCell id="wero" />
@@ -253,7 +275,7 @@ function ScreenContent({ state, time }) {
     return (
       <div style={inner}>
         <ScreenHeader time={time} />
-        <div style={{ padding: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gridAutoRows: '1fr', gap: 6, flex: 1 }}>
+        <div style={{ padding: '8px 10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gridAutoRows: '1fr', gap: 8, flex: 1 }}>
           <ScreenCell id="paybylink" />
           <ScreenCell id="bnpl" />
           <ScreenCell id="wero" />
@@ -267,7 +289,7 @@ function ScreenContent({ state, time }) {
     return (
       <div style={inner}>
         <ScreenHeader time={time} />
-        <div style={{ padding: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gridAutoRows: '1fr', gap: 6, flex: 1 }}>
+        <div style={{ padding: '8px 10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gridAutoRows: '1fr', gap: 8, flex: 1 }}>
           <ScreenCell id="paybylink" />
           <ScreenCell id="bnpl" />
           <ScreenCell id="wero" />
@@ -283,15 +305,12 @@ function ScreenContent({ state, time }) {
   return (
     <div style={inner} className="pp-state6">
       <ScreenHeader time={time} />
-      <div style={{
-        textAlign: 'center', color: '#00d4ff',
-        fontSize: 9, fontWeight: 700, letterSpacing: '0.22em',
-        padding: '4px 0 0',
-      }}>
-        6 MODULES ACTIFS
-      </div>
-      <div style={{ padding: '8px 10px 10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gridAutoRows: '1fr', gap: 6, flex: 1 }}>
+      <div style={{ padding: '11px 10px 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, flex: 1 }}>
         {PRODUCTS.map(p => <ScreenCell key={p.id} id={p.id} />)}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '0 10px 10px' }}>
+        <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#00d4ff', animation: 'pp-dot-pulse 1.5s ease infinite' }} />
+        <span style={{ color: '#00d4ff', fontSize: 11, fontWeight: 700, letterSpacing: '0.1em' }}>6 MODULES ACTIFS</span>
       </div>
     </div>
   );
@@ -517,7 +536,7 @@ export default function PayPOSHero() {
 /* ── Terminal image + screen overlay ── */
 function TerminalInner({ activeState, time, intense, pulseRef }) {
   return (
-    <div style={{ position: 'relative', width: TERMINAL_WIDTH }}>
+    <div style={{ position: 'relative', width: TERMINAL_WIDTH, filter: 'drop-shadow(0 20px 60px rgba(0,0,0,0.6))' }}>
       <img
         src={`${import.meta.env.BASE_URL}${TERMINAL_IMG}`}
         alt="PayPOS Terminal"
@@ -527,11 +546,10 @@ function TerminalInner({ activeState, time, intense, pulseRef }) {
           display: 'block',
           position: 'relative',
           zIndex: 1,
-          filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.5))',
         }}
       />
 
-      {/* Fake screen overlay */}
+      {/* Fake screen overlay — transform matches terminal photo angle */}
       <div style={{
         position: 'absolute',
         top:    SCREEN_TOP,
@@ -542,13 +560,14 @@ function TerminalInner({ activeState, time, intense, pulseRef }) {
         overflow: 'hidden',
         background: '#0d1b3e',
         zIndex: 10,
+        transform: SCREEN_TRANSFORM,
+        transformOrigin: 'center center',
         boxShadow: intense
           ? '0 0 0 1px rgba(0,212,255,0.5), 0 0 40px 6px rgba(0,212,255,0.35), inset 0 0 12px rgba(0,212,255,0.15)'
           : 'inset 0 0 8px rgba(0,0,0,0.4)',
         transition: 'box-shadow 0.6s ease',
       }}>
         <ScreenContent state={activeState} time={time} />
-        {/* Flash overlay — remounts on state change to re-trigger the CSS animation */}
         <div
           key={activeState}
           className="pp-flash"
@@ -564,7 +583,7 @@ function TerminalInner({ activeState, time, intense, pulseRef }) {
   );
 }
 
-/* Mobile entry — used by mobile branch */
+/* Mobile entry */
 function TerminalWithScreen({ activeState, time, scale = 1 }) {
   const intense = activeState === 6;
   return (
@@ -605,6 +624,10 @@ function GlobalStyles() {
       @keyframes pp-finale-pulse {
         0%, 100% { transform: scale(1); }
         50%      { transform: scale(1.05); }
+      }
+      @keyframes pp-dot-pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50%      { opacity: 0.4; transform: scale(0.7); }
       }
 
       .pp-eyebrow { animation: eyebrowIn 0.6s ease both; }
