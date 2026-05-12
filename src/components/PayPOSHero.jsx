@@ -5,123 +5,110 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 gsap.registerPlugin(ScrollTrigger);
 
 /* ──────────────────────────────────────────────────────────────
-   TERMINAL POSITIONING + IMAGE CROP
-   devices6.png contains a smartphone (left) + Verifone terminal (right).
-   We render the image at IMG_DISPLAY_WIDTH and shift it by IMG_OFFSET_X
-   inside an overflow:hidden mask so only the right device is visible.
-   Tune these two values if the proportions of the image change.
+   TERMINAL — single Verifone device, image already pre-cropped.
+   public/terminal.png is 580×1140 natural; we display it at TW wide
+   and the height scales proportionally.
    ───────────────────────────────────────────────────────────── */
-const TERMINAL_WIDTH    = 420;   // final visible width of the terminal device
-const IMG_DISPLAY_WIDTH = 840;   // image rendered at 2× — adjust if image proportions differ
-const IMG_OFFSET_X      = -420;  // shift left to hide the smartphone
+const TERMINAL_WIDTH = 340;     // display width of the terminal device
+const TERMINAL_IMG   = 'terminal.png';
 
 /* ──────────────────────────────────────────────────────────────
-   FAKE SCREEN OVERLAY — adjust pixel-by-pixel to align with terminal
-   These four values position a div exactly over the terminal screen.
+   FAKE SCREEN OVERLAY — calibrated for terminal.png at TW=340.
+   Pixel-measured: screen spans orig x≈111-436, y≈170-842 → scaled.
    ───────────────────────────────────────────────────────────── */
-const SCREEN_TOP    = 82;
-const SCREEN_LEFT   = 50;
-const SCREEN_WIDTH  = 224;
-const SCREEN_HEIGHT = 385;
-const SCREEN_RADIUS = 24;
+const SCREEN_LEFT   = 65;
+const SCREEN_TOP    = 100;
+const SCREEN_WIDTH  = 190;
+const SCREEN_HEIGHT = 394;
+const SCREEN_RADIUS = 14;
 
-/* ── Scroll mechanics ── */
-const SCROLL_PX = 600;     // total pinned scroll distance
-const TOTAL_STATES = 7;    // states 0..6
+const THW = TERMINAL_WIDTH / 2;
 
 const PRODUCTS = [
-  { id: 'paybylink', label: 'PayByLink',     short: 'PAY-BY-LINK', color: '#00d4ff' },
-  { id: 'bnpl',      label: 'BNPL & Credit', short: 'BNPL',        color: '#a855f7' },
-  { id: 'wero',      label: 'Wero',          short: 'WERO',        color: '#6366f1' },
-  { id: 'noshow',    label: 'NoShow',        short: 'NOSHOW',      color: '#10b981' },
-  { id: 'crypto',    label: 'Crypto',        short: 'CRYPTO',      color: '#f7931a' },
-  { id: 'a2a',       label: 'A2A & Wallets', short: 'A2A',         color: '#3b82f6' },
+  { id: 'paybylink', label: 'PayByLink',     short: 'PAY-BY-LINK', color: '#00d4ff', ox: -280, oy:  -80 },
+  { id: 'bnpl',      label: 'BNPL & Credit', short: 'BNPL',        color: '#a855f7', ox:  220, oy:  -60 },
+  { id: 'wero',      label: 'Wero',          short: 'WERO',        color: '#6366f1', ox: -300, oy:   60 },
+  { id: 'noshow',    label: 'NoShow',        short: 'NOSHOW',      color: '#10b981', ox:  240, oy:   80 },
+  { id: 'crypto',    label: 'Crypto',        short: 'CRYPTO',      color: '#f7931a', ox: -220, oy:  180 },
+  { id: 'a2a',       label: 'A2A & Wallets', short: 'A2A',         color: '#3b82f6', ox:  200, oy:  160 },
 ];
 
 const PARTICLES = [
-  { id: 0, size: 2, l: '55%', t: '18%', op: 0.20, dur: 4.2, del: 0    },
-  { id: 1, size: 3, l: '72%', t: '12%', op: 0.18, dur: 6.0, del: -1.5 },
-  { id: 2, size: 2, l: '86%', t: '30%', op: 0.22, dur: 5.4, del: -3.0 },
-  { id: 3, size: 3, l: '88%', t: '54%', op: 0.15, dur: 7.0, del: -2.0 },
-  { id: 4, size: 2, l: '78%', t: '74%', op: 0.20, dur: 5.8, del: -4.0 },
-  { id: 5, size: 2, l: '60%', t: '82%', op: 0.18, dur: 6.4, del: -1.0 },
-  { id: 6, size: 3, l: '50%', t: '40%', op: 0.15, dur: 4.8, del: -2.7 },
-  { id: 7, size: 2, l: '92%', t: '46%', op: 0.25, dur: 3.6, del: -0.6 },
+  { id: 0,  size: 2, l: '44%', t: '17%', op: 0.30, dur: 5.2, del: 0    },
+  { id: 1,  size: 3, l: '68%', t: '11%', op: 0.20, dur: 7.1, del: -2.1 },
+  { id: 2,  size: 2, l: '79%', t: '27%', op: 0.25, dur: 6.3, del: -4.0 },
+  { id: 3,  size: 2, l: '83%', t: '44%', op: 0.20, dur: 8.0, del: -1.3 },
+  { id: 4,  size: 3, l: '76%', t: '66%', op: 0.30, dur: 5.5, del: -3.2 },
+  { id: 5,  size: 2, l: '59%', t: '79%', op: 0.20, dur: 6.1, del: -5.0 },
+  { id: 6,  size: 2, l: '46%', t: '73%', op: 0.25, dur: 7.4, del: -2.0 },
+  { id: 7,  size: 3, l: '37%', t: '56%', op: 0.20, dur: 4.2, del: -4.5 },
 ];
 
-/* ── Inline SVG icons, 32×32 viewBox ── */
-function ProductIcon({ id, size = 32 }) {
+const STEP      = 1.2;
+const TOTAL     = PRODUCTS.length * STEP + 1;
+const SCROLL_PX = 140;
+
+/* ── Branded SVG icons ── */
+function ProductIcon({ id, size = 24, color }) {
+  const c = color || (PRODUCTS.find(p => p.id === id)?.color ?? '#00d4ff');
   const common = { width: size, height: size, viewBox: '0 0 32 32', fill: 'none' };
   switch (id) {
     case 'paybylink':
       return (
         <svg {...common}>
           <path d="M13 17a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"
-            stroke="#00d4ff" strokeWidth="2" strokeLinecap="round" />
+            stroke={c} strokeWidth="2" strokeLinecap="round" />
           <path d="M19 15a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"
-            stroke="#00d4ff" strokeWidth="2" strokeLinecap="round" />
+            stroke={c} strokeWidth="2" strokeLinecap="round" />
         </svg>
       );
     case 'bnpl':
       return (
         <svg {...common}>
-          <rect x="3" y="8" width="26" height="18" rx="3" stroke="#a855f7" strokeWidth="2" />
-          <path d="M3 13h26" stroke="#a855f7" strokeWidth="2" />
-          <path d="M8 19h4M8 22h6" stroke="#a855f7" strokeWidth="2" strokeLinecap="round" />
-          <path d="M22 19l-3 3M25 19l-3 3" stroke="#a855f7" strokeWidth="2" strokeLinecap="round" />
+          <rect x="3" y="8" width="26" height="18" rx="3" stroke={c} strokeWidth="2" />
+          <path d="M3 13h26" stroke={c} strokeWidth="2" />
+          <path d="M8 19h4M8 22h6" stroke={c} strokeWidth="2" strokeLinecap="round" />
+          <path d="M22 19l-3 3M25 19l-3 3" stroke={c} strokeWidth="2" strokeLinecap="round" />
         </svg>
       );
     case 'wero':
       return (
         <svg {...common}>
-          <circle cx="16" cy="16" r="13" stroke="#6366f1" strokeWidth="2" />
+          <circle cx="16" cy="16" r="13" stroke={c} strokeWidth="2" />
           <path d="M9 11l3 10 4-7 4 7 3-10"
-            stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       );
     case 'noshow':
       return (
         <svg {...common}>
           <path d="M16 3L4 8v8c0 7 5.4 11.9 12 14 6.6-2.1 12-7 12-14V8L16 3z"
-            stroke="#10b981" strokeWidth="2" strokeLinejoin="round" />
+            stroke={c} strokeWidth="2" strokeLinejoin="round" />
           <path d="M11 16l3 3 7-7"
-            stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       );
     case 'crypto':
       return (
         <svg {...common}>
-          <circle cx="16" cy="16" r="13" stroke="#f7931a" strokeWidth="2" />
+          <circle cx="16" cy="16" r="13" stroke={c} strokeWidth="2" />
           <path d="M13 10h6a3 3 0 010 6h-6m0 0h7a3 3 0 010 6h-7m0-12v12m2-14v2m3-2v2m-3 12v2m3-2v2"
-            stroke="#f7931a" strokeWidth="2" strokeLinecap="round" />
+            stroke={c} strokeWidth="2" strokeLinecap="round" />
         </svg>
       );
     case 'a2a':
       return (
         <svg {...common}>
-          <circle cx="8"  cy="16" r="5" stroke="#3b82f6" strokeWidth="2" />
-          <circle cx="24" cy="16" r="5" stroke="#3b82f6" strokeWidth="2" />
-          <path d="M13 13l6-3M13 19l6 3" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" />
+          <circle cx="8"  cy="16" r="5" stroke={c} strokeWidth="2" />
+          <circle cx="24" cy="16" r="5" stroke={c} strokeWidth="2" />
+          <path d="M13 13l6-3M13 19l6 3" stroke={c} strokeWidth="2" strokeLinecap="round" />
         </svg>
       );
     default: return null;
   }
 }
 
-/* ── Helpers ── */
-function useTime() {
-  const fmt = () => {
-    const d = new Date();
-    return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-  };
-  const [time, setTime] = useState(fmt);
-  useEffect(() => {
-    const id = setInterval(() => setTime(fmt()), 30000);
-    return () => clearInterval(id);
-  }, []);
-  return time;
-}
-
+/* ── Screen helpers ── */
 function ScreenStatusBar({ time, dim = false }) {
   const color = dim ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.7)';
   return (
@@ -255,7 +242,7 @@ function ScreenContent({ state, time }) {
           <ScreenCell id="paybylink" />
           <ScreenCell id="bnpl" />
           <ScreenCell id="wero" />
-          <div /> {/* middle-right empty */}
+          <div />
           <Placeholder /><Placeholder />
         </div>
       </div>
@@ -310,37 +297,22 @@ function ScreenContent({ state, time }) {
   );
 }
 
-/* ── Progress dots (left panel) ── */
-function ProgressDots({ activeState }) {
-  return (
-    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-      {PRODUCTS.map((p, i) => {
-        const lit = activeState >= i + 1;
-        return (
-          <span key={p.id} style={{
-            width: 6, height: 6, borderRadius: '50%',
-            background: lit ? '#00d4ff' : 'rgba(255,255,255,0.2)',
-            boxShadow: lit ? `0 0 8px ${p.color}` : 'none',
-            transition: 'background 0.3s, box-shadow 0.3s',
-          }} />
-        );
-      })}
-    </div>
-  );
-}
-
-/* ──────────────────────────────────────────────────────────── */
-
 export default function PayPOSHero() {
-  const sectionRef       = useRef(null);
-  const subtitleRef      = useRef(null);
-  const activeStateRef   = useRef(0);
-  const time             = useTime();
+  const sectionRef  = useRef(null);
+  const terminalRef = useRef(null);
+  const glowRef     = useRef(null);
+  const pulseRef    = useRef(null);
+  const subtitleRef = useRef(null);
+  const cardRefs    = useRef([]);
+  const absorbedRef = useRef(new Set());
 
-  const [isMobile, setIsMobile]       = useState(
+  const [isMobile,    setIsMobile]    = useState(
     () => typeof window !== 'undefined' && window.innerWidth < 768
   );
-  const [activeState, setActiveState] = useState(0);
+  const [absorbedIds, setAbsorbedIds] = useState(new Set());
+  const time = '09:52 am';
+  const activeState = absorbedIds.size;
+  const intense = activeState === 6;
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)');
@@ -351,39 +323,76 @@ export default function PayPOSHero() {
 
   useEffect(() => {
     if (isMobile) return;
-    let st;
+    let ctx;
     const timer = setTimeout(() => {
-      const section = sectionRef.current;
-      if (!section) return;
+      const section  = sectionRef.current;
+      const terminal = terminalRef.current;
+      const glow     = glowRef.current;
+      if (!section || !terminal || !glow) return;
 
-      st = ScrollTrigger.create({
-        trigger: section,
-        pin: true,
-        start: 'top top',
-        end: `+=${SCROLL_PX}`,
-        scrub: 1.5,
-        anticipatePin: 1,
-        onUpdate: (self) => {
-          // Map progress (0..1) → state (0..6). Each state occupies one slice.
-          const raw = self.progress * (TOTAL_STATES - 1);
-          const next = Math.max(0, Math.min(TOTAL_STATES - 1, Math.round(raw)));
-          if (next !== activeStateRef.current) {
-            activeStateRef.current = next;
-            setActiveState(next);
+      ctx = gsap.context(() => {
+        gsap.to(terminal, { y: -18, duration: 3, ease: 'sine.inOut', yoyo: true, repeat: -1 });
+
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: section,
+            pin:     true,
+            start:   'top top',
+            end:     `+=${PRODUCTS.length * SCROLL_PX}`,
+            scrub:   1,
+            anticipatePin: 1,
+            onUpdate: (self) => {
+              let changed = false;
+              PRODUCTS.forEach((p, i) => {
+                const on  = ((i + 1) * STEP) / TOTAL;
+                const off = (i       * STEP) / TOTAL;
+                if (self.progress >= on  && !absorbedRef.current.has(p.id)) { absorbedRef.current.add(p.id);    changed = true; }
+                if (self.progress <  off &&  absorbedRef.current.has(p.id)) { absorbedRef.current.delete(p.id); changed = true; }
+              });
+              if (changed) setAbsorbedIds(new Set(absorbedRef.current));
+            },
+          },
+        });
+
+        const pulse = pulseRef.current;
+
+        PRODUCTS.forEach((p, i) => {
+          const card = cardRefs.current[i];
+          if (!card) return;
+          const at = i * STEP;
+
+          tl.to(card, { x: -p.ox, y: -p.oy, scale: 0, opacity: 0, duration: 1, ease: 'power2.in' }, at);
+
+          tl.to(terminal, { scaleX: 1.06, scaleY: 0.97, duration: 0.07, ease: 'power3.out', transformOrigin: 'center bottom' }, at + 0.85);
+          tl.to(terminal, { scaleX: 1.00, scaleY: 1.00, duration: 0.45, ease: 'elastic.out(1.1, 0.4)', transformOrigin: 'center bottom' }, at + 0.92);
+
+          if (pulse) {
+            tl.to(pulse, { opacity: 0.55, duration: 0.06, ease: 'power2.out' }, at + 0.85);
+            tl.to(pulse, { opacity: 0,    duration: 0.40, ease: 'power2.in'  }, at + 0.91);
           }
-        },
-      });
-    }, 120);
 
-    return () => { clearTimeout(timer); st?.kill(); };
+          tl.to(glow, { opacity: 0.55, scale: 1.7, duration: 0.12, ease: 'power2.out' }, at + 0.85);
+          tl.to(glow, { opacity: 0.15, scale: 1.0, duration: 0.15, ease: 'power2.in'  }, at + 0.97);
+        });
+
+        tl.fromTo(
+          subtitleRef.current,
+          { opacity: 0, y: 20 },
+          { opacity: 1, y: 0, duration: 0.5 },
+          PRODUCTS.length * STEP + 0.2
+        );
+      }, section);
+    }, 150);
+
+    return () => { clearTimeout(timer); ctx?.revert(); };
   }, [isMobile]);
 
-  /* ─────────────────── Mobile layout (static, final state) ─────────────────── */
+  /* ─────────────────── Mobile layout ─────────────────── */
   if (isMobile) {
     return (
-      <section style={{ ...S.root, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28, padding: '64px 20px', overflow: 'visible' }}>
+      <section style={{ ...S.root, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32, padding: '80px 24px', overflow: 'visible' }}>
         <GlobalStyles />
-        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <span style={S.eyebrow} className="pp-eyebrow">Next-Gen Payment Terminal</span>
           <div style={S.eyebrowLine} />
           <h1 style={{ ...S.h1, fontSize: 'clamp(36px,10vw,56px)' }}>
@@ -394,6 +403,16 @@ export default function PayPOSHero() {
           </p>
         </div>
         <TerminalWithScreen activeState={6} time={time} scale={0.78} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, width: '100%' }}>
+          {PRODUCTS.map(p => (
+            <div key={p.id} style={{ ...S.card, borderRadius: 14, padding: '11px 14px' }}>
+              <div style={{ ...S.iconBox, background: `${p.color}1A` }}>
+                <ProductIcon id={p.id} size={18} />
+              </div>
+              <span style={{ ...S.cardLabel, fontSize: 12 }}>{p.label}</span>
+            </div>
+          ))}
+        </div>
       </section>
     );
   }
@@ -402,111 +421,117 @@ export default function PayPOSHero() {
     <section ref={sectionRef} style={S.root}>
       <GlobalStyles />
 
-      {/* Ambient: pulsing radial */}
-      <div style={S.atmoPulse} />
+      <div style={S.atmo1} />
+      <div style={S.atmo2} />
 
-      {/* Connecting lines (left → terminal) */}
-      <svg style={S.connectSvg} width="100%" height="100%" preserveAspectRatio="none">
-        <line x1="30%" y1="50%" x2="70%" y2="50%"
-          stroke="rgba(0,212,255,0.08)" strokeWidth="1" strokeDasharray="3 6" className="pp-dash" />
-      </svg>
-
-      {/* Floating particles */}
       {PARTICLES.map(p => (
-        <div key={p.id} style={{
-          position: 'absolute', left: p.l, top: p.t,
-          width: p.size, height: p.size, borderRadius: '50%',
-          background: '#fff', opacity: p.op,
-          animation: `pp-float ${p.dur}s ease-in-out ${p.del}s infinite`,
-          pointerEvents: 'none', zIndex: 2,
-        }} />
+        <div
+          key={p.id}
+          style={{
+            position: 'absolute', left: p.l, top: p.t,
+            width: p.size, height: p.size, borderRadius: '50%',
+            background: '#fff', opacity: p.op,
+            animation: `particleFloat ${p.dur}s ease-in-out ${p.del}s infinite`,
+            pointerEvents: 'none', zIndex: 2,
+          }}
+        />
       ))}
 
-      {/* ── Left content ── */}
       <div style={S.textBlock}>
-        <span style={S.eyebrow} className="pp-eyebrow">Next-Gen Payment Terminal</span>
-        <div style={S.eyebrowLine} />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <span style={S.eyebrow} className="pp-eyebrow">Next-Gen Payment Terminal</span>
+          <div style={S.eyebrowLine} />
+        </div>
         <h1 style={S.h1}>
           <span style={S.gradientH1}>One Terminal.</span>
           <br />Every Payment.
         </h1>
-        <ProgressDots activeState={activeState} />
-        <p ref={subtitleRef} style={{
-          ...S.subtitle,
-          opacity: activeState >= 6 ? 1 : 0,
-          transform: activeState >= 6 ? 'translateY(0)' : 'translateY(10px)',
-          transition: 'opacity 0.7s ease 0.2s, transform 0.7s ease 0.2s',
-        }}>
+        <p ref={subtitleRef} style={{ ...S.subtitle, opacity: 0 }}>
           PayPOS centralise tous vos moyens de paiement en un seul terminal Android.
         </p>
-        <button style={{
-          ...S.cta,
-          opacity: activeState >= 6 ? 1 : 0,
-          transform: activeState >= 6 ? 'translateY(0)' : 'translateY(10px)',
-          transition: 'opacity 0.7s ease 0.6s, transform 0.7s ease 0.6s, scale 0.2s ease, box-shadow 0.2s ease',
-          pointerEvents: activeState >= 6 ? 'auto' : 'none',
-        }}
-          onMouseEnter={(e) => { e.currentTarget.style.scale = '1.03'; e.currentTarget.style.boxShadow = '0 0 30px rgba(0,212,255,0.4)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.scale = '1'; e.currentTarget.style.boxShadow = 'none'; }}
-        >
-          Découvrir PayPOS →
-        </button>
       </div>
 
-      {/* ── Terminal (right side) ── */}
-      <TerminalWithScreen activeState={activeState} time={time} />
+      {/* Orbital zone — zero-size anchor at terminal center */}
+      <div style={{
+        position: 'absolute',
+        right: `calc(13% + ${THW}px)`,
+        top: '50%',
+        width: 0, height: 0,
+      }}>
+        <div ref={glowRef} style={S.glowAtmo} />
+
+        <svg width="0" height="0" style={S.svgLines} overflow="visible">
+          <defs>
+            <style>{`
+              .dash { animation: dashFlow 3s linear infinite; }
+              @keyframes dashFlow { to { stroke-dashoffset: -36; } }
+            `}</style>
+          </defs>
+          {PRODUCTS.map(p => (
+            <line
+              key={p.id}
+              x1={p.ox} y1={p.oy} x2={0} y2={0}
+              stroke="rgba(0,212,255,0.15)"
+              strokeDasharray="4 8"
+              strokeWidth="1"
+              className="dash"
+            />
+          ))}
+        </svg>
+
+        {/* Terminal centered on the orbital anchor */}
+        <div style={{
+          position: 'absolute',
+          left: -THW, top: '-50%',
+          transform: 'translateY(-50%)',
+          width: TERMINAL_WIDTH,
+        }}>
+          <div ref={terminalRef} style={{ willChange: 'transform', position: 'relative', zIndex: 6 }}>
+            <TerminalInner activeState={activeState} time={time} intense={intense} pulseRef={pulseRef} />
+          </div>
+        </div>
+
+        {PRODUCTS.map((p, i) => (
+          <div
+            key={p.id}
+            style={{
+              position: 'absolute',
+              left: p.ox, top: p.oy,
+              transform: 'translate(-50%, -50%)',
+              zIndex: 8,
+            }}
+          >
+            <div ref={el => { cardRefs.current[i] = el; }} style={{ ...S.card, borderTopColor: `${p.color}55` }}>
+              <div style={{ ...S.iconBox, background: `${p.color}1A` }}>
+                <ProductIcon id={p.id} size={20} />
+              </div>
+              <span style={S.cardLabel}>{p.label}</span>
+            </div>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }
 
-/* ── Terminal + cropped image + screen overlay ── */
-function TerminalWithScreen({ activeState, time, scale = 1 }) {
-  const intense = activeState === 6;
+/* ── Terminal image + screen overlay ── */
+function TerminalInner({ activeState, time, intense, pulseRef }) {
   return (
-    <div style={{
-      position: 'absolute',
-      right: '8%', top: '50%',
-      transform: `translateY(-50%) scale(${scale})`,
-      transformOrigin: 'center',
-      width: TERMINAL_WIDTH,
-      filter: 'drop-shadow(0 0 80px rgba(0,100,255,0.18))',
-      zIndex: 5,
-    }}>
-      {/* Glow ring behind terminal */}
-      <div style={{
-        position: 'absolute',
-        top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-        width: TERMINAL_WIDTH * 1.4, height: TERMINAL_WIDTH * 1.4,
-        borderRadius: '50%',
-        boxShadow: intense
-          ? '0 0 160px 50px rgba(0,150,255,0.35)'
-          : '0 0 120px 40px rgba(0,100,255,0.15)',
-        transition: 'box-shadow 1s ease',
-        pointerEvents: 'none',
-        zIndex: 0,
-      }} />
+    <div style={{ position: 'relative', width: TERMINAL_WIDTH }}>
+      <img
+        src={`${import.meta.env.BASE_URL}${TERMINAL_IMG}`}
+        alt="PayPOS Terminal"
+        style={{
+          width: TERMINAL_WIDTH,
+          height: 'auto',
+          display: 'block',
+          position: 'relative',
+          zIndex: 1,
+          filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.5))',
+        }}
+      />
 
-      {/* Cropped image mask — mix-blend-mode on the outer div so the
-          terminal shape composites against the page background correctly */}
-      <div style={{
-        position: 'relative',
-        width: TERMINAL_WIDTH,
-        overflow: 'hidden',
-        zIndex: 1,
-        mixBlendMode: 'screen',
-      }}>
-        <img
-          src={`${import.meta.env.BASE_URL}devices6.png`}
-          alt="PayPOS Terminal"
-          style={{
-            width: IMG_DISPLAY_WIDTH,
-            marginLeft: IMG_OFFSET_X,
-            display: 'block',
-          }}
-        />
-      </div>
-
-      {/* Fake screen overlay — adjust SCREEN_TOP/LEFT/WIDTH/HEIGHT/RADIUS at top of file */}
+      {/* Fake screen overlay */}
       <div style={{
         position: 'absolute',
         top:    SCREEN_TOP,
@@ -521,7 +546,6 @@ function TerminalWithScreen({ activeState, time, scale = 1 }) {
           ? '0 0 0 1px rgba(0,212,255,0.5), 0 0 40px 6px rgba(0,212,255,0.35), inset 0 0 12px rgba(0,212,255,0.15)'
           : 'inset 0 0 8px rgba(0,0,0,0.4)',
         transition: 'box-shadow 0.6s ease',
-        willChange: 'transform',
       }}>
         <ScreenContent state={activeState} time={time} />
         {/* Flash overlay — remounts on state change to re-trigger the CSS animation */}
@@ -534,35 +558,44 @@ function TerminalWithScreen({ activeState, time, scale = 1 }) {
               : PRODUCTS[Math.min(activeState - 1, PRODUCTS.length - 1)].color,
           }}
         />
+        <div ref={pulseRef} style={S.screenPulse} />
       </div>
     </div>
   );
 }
 
-/* ── Global styles + keyframes ── */
+/* Mobile entry — used by mobile branch */
+function TerminalWithScreen({ activeState, time, scale = 1 }) {
+  const intense = activeState === 6;
+  return (
+    <div style={{
+      position: 'relative',
+      width: TERMINAL_WIDTH,
+      transform: `scale(${scale})`,
+      transformOrigin: 'center top',
+    }}>
+      <TerminalInner activeState={activeState} time={time} intense={intense} pulseRef={{ current: null }} />
+    </div>
+  );
+}
+
+/* ── Styles ── */
 function GlobalStyles() {
   return (
     <style>{`
       @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap');
 
-      @keyframes pp-float {
-        0%, 100% { transform: translateY(0); }
-        50%      { transform: translateY(-9px); }
+      @keyframes particleFloat {
+        0%, 100% { transform: translateY(0px); }
+        50%       { transform: translateY(-9px); }
       }
-      @keyframes pp-eyebrow-in {
+      @keyframes eyebrowIn {
         from { opacity: 0; transform: translateY(10px); }
         to   { opacity: 1; transform: translateY(0); }
-      }
-      @keyframes pp-atmo-pulse {
-        0%, 100% { opacity: 0.8; }
-        50%      { opacity: 1;   }
       }
       @keyframes pp-scanline {
         0%   { transform: translateX(-100%); }
         100% { transform: translateX(266%); }
-      }
-      @keyframes pp-dash-flow {
-        to { stroke-dashoffset: -36; }
       }
       @keyframes pp-flash {
         0%   { opacity: 0; }
@@ -574,9 +607,8 @@ function GlobalStyles() {
         50%      { transform: scale(1.05); }
       }
 
-      .pp-eyebrow  { animation: pp-eyebrow-in 0.6s ease both; }
-      .pp-dash     { animation: pp-dash-flow 3s linear infinite; }
-      .pp-flash    {
+      .pp-eyebrow { animation: eyebrowIn 0.6s ease both; }
+      .pp-flash {
         position: absolute; inset: 0;
         pointer-events: none;
         opacity: 0;
@@ -598,30 +630,32 @@ const S = {
     minHeight: '100vh',
     overflow: 'clip',
   },
-  atmoPulse: {
+  atmo1: {
     position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
-    background: 'radial-gradient(ellipse at 65% 50%, rgba(0,80,255,0.12) 0%, transparent 60%)',
-    animation: 'pp-atmo-pulse 4s ease-in-out infinite',
+    background: 'radial-gradient(ellipse 60% 60% at 65% 50%, rgba(0,100,255,0.15) 0%, rgba(0,212,255,0.05) 40%, transparent 70%)',
   },
-  connectSvg: {
-    position: 'absolute', inset: 0, zIndex: 1, pointerEvents: 'none',
+  atmo2: {
+    position: 'absolute', zIndex: 1, pointerEvents: 'none',
+    width: 300, height: 300, borderRadius: '50%',
+    background: 'radial-gradient(circle, rgba(0,180,255,0.20) 0%, transparent 70%)',
+    right: `calc(13% + ${THW - 150}px)`,
+    top: 'calc(50% - 150px)',
   },
   textBlock: {
     position: 'absolute', left: '6%', top: '50%', transform: 'translateY(-50%)',
-    zIndex: 10, display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 460,
+    zIndex: 10, display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 460,
   },
   eyebrow: {
-    color: '#00d4ff', fontSize: 11, fontWeight: 700,
+    color: '#00d4ff', fontSize: 12, fontWeight: 700,
     letterSpacing: '0.3em', textTransform: 'uppercase',
-    marginBottom: 0,
   },
   eyebrowLine: {
-    width: 80, height: 1,
-    background: 'linear-gradient(90deg, #00d4ff, transparent)',
-    opacity: 0.6,
+    width: '100%', height: 1,
+    background: 'linear-gradient(90deg, transparent, #00d4ff, transparent)',
+    opacity: 0.5,
   },
   h1: {
-    fontSize: 'clamp(44px, 5vw, 72px)', fontWeight: 800,
+    fontSize: 'clamp(48px,5.5vw,80px)', fontWeight: 800,
     color: '#fff', lineHeight: 1.05, margin: 0,
   },
   gradientH1: {
@@ -631,15 +665,45 @@ const S = {
     backgroundClip: 'text',
   },
   subtitle: {
-    color: 'rgba(255,255,255,0.55)', fontSize: 15, lineHeight: 1.6, maxWidth: 380,
-    margin: 0,
+    color: 'rgba(255,255,255,0.6)', fontSize: 17, lineHeight: 1.65, maxWidth: 400,
   },
-  cta: {
-    alignSelf: 'flex-start',
-    background: '#00d4ff', color: '#000',
-    fontFamily: 'inherit', fontWeight: 700, fontSize: 14,
-    border: 'none', borderRadius: 100,
-    padding: '14px 28px', cursor: 'pointer',
-    willChange: 'transform',
+  glowAtmo: {
+    position: 'absolute',
+    width: 520, height: 520, left: -260, top: -260,
+    borderRadius: '50%',
+    background: 'radial-gradient(circle, rgba(0,212,255,0.12) 0%, transparent 70%)',
+    opacity: 0.15, pointerEvents: 'none',
+    transformOrigin: 'center center',
+    zIndex: 3,
+  },
+  svgLines: {
+    position: 'absolute', left: 0, top: 0,
+    pointerEvents: 'none', zIndex: 3,
+  },
+  screenPulse: {
+    position: 'absolute', inset: 0,
+    background: 'radial-gradient(circle at 50% 45%, rgba(0,212,255,0.55) 0%, rgba(0,100,255,0.25) 50%, transparent 80%)',
+    opacity: 0, pointerEvents: 'none', zIndex: 6,
+  },
+  card: {
+    display: 'flex', alignItems: 'center', gap: 12,
+    background:          'rgba(255,255,255,0.04)',
+    border:              '1px solid rgba(255,255,255,0.12)',
+    borderTopColor:      'rgba(0,212,255,0.3)',
+    backdropFilter:      'blur(20px)',
+    WebkitBackdropFilter:'blur(20px)',
+    borderRadius:        20,
+    padding:             '14px 20px',
+    boxShadow:           '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.10)',
+    willChange:          'transform',
+    whiteSpace:          'nowrap',
+  },
+  iconBox: {
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    background: 'rgba(0,212,255,0.10)',
+    borderRadius: 10, padding: 8, flexShrink: 0,
+  },
+  cardLabel: {
+    color: '#fff', fontWeight: 600, fontSize: 13, letterSpacing: '0.02em',
   },
 };
