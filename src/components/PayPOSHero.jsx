@@ -764,8 +764,8 @@ export default function PayPOSHero() {
               position: 'absolute',
               top: cardLayout.rowMids[row] - CARD_H_EST / 2,
               ...(isLeft
-                ? { right: cardLayout.sectionWidth - cardLayout.scrLeft + 32 }
-                : { left: cardLayout.scrRight + 32 }
+                ? { right: cardLayout.sectionWidth - cardLayout.scrLeft + 48 }
+                : { left: cardLayout.scrRight + 36 }
               ),
               zIndex: 8,
             }}
@@ -893,7 +893,7 @@ const S = {
     animation: 'atmoBreath 4s ease-in-out infinite',
   },
   textBlock: {
-    position: 'absolute', left: '6%', top: '50%', transform: 'translateY(calc(-50% - 18px))',
+    position: 'absolute', left: '6%', top: '50%', transform: 'translateY(calc(-50% - 38px))',
     zIndex: 10, display: 'flex', flexDirection: 'column', gap: 24, maxWidth: 460,
   },
   eyebrow: {
