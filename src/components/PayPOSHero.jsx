@@ -22,6 +22,8 @@ const SCREEN_WIDTH     = 154;
 const SCREEN_HEIGHT    = 381;
 const SCREEN_RADIUS    = 7;
 const SCREEN_TRANSFORM = 'perspective(420px) rotateY(5.5deg) rotateX(-0.5deg)';
+// 2*(W+H - 4R) + 2πR  with W=153 H=380 R=7
+const SCREEN_PERIM = 1054;
 
 const THW = TERMINAL_WIDTH / 2;
 
@@ -224,13 +226,6 @@ function ScreenContent({ state, time }) {
             <div style={{ color: '#fff', fontSize: 14, fontWeight: 700, letterSpacing: '0.12em' }}>PAYPOS</div>
           </div>
           <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, letterSpacing: '0.06em' }}>{time}</div>
-        </div>
-        <div style={{ position: 'relative', height: 2, overflow: 'hidden' }}>
-          <div style={{
-            position: 'absolute', top: 0, left: 0, height: '100%', width: '60%',
-            background: 'linear-gradient(90deg, transparent, #00d4ff 50%, transparent)',
-            animation: 'pp-scanline 2s linear infinite',
-          }} />
         </div>
       </div>
     );
@@ -542,6 +537,48 @@ export default function PayPOSHero() {
   );
 }
 
+/* ── Neon border that traces the screen perimeter ── */
+function ScreenBorder({ intense }) {
+  const W = SCREEN_WIDTH - 1;
+  const H = SCREEN_HEIGHT - 1;
+  const cometLen = intense ? SCREEN_PERIM : 80;
+  return (
+    <svg
+      width={SCREEN_WIDTH}
+      height={SCREEN_HEIGHT}
+      style={{
+        position: 'absolute',
+        top: SCREEN_TOP, left: SCREEN_LEFT,
+        transform: SCREEN_TRANSFORM,
+        transformOrigin: 'center center',
+        pointerEvents: 'none',
+        zIndex: 12,
+        overflow: 'visible',
+      }}
+    >
+      {/* Full lit border — only when all modules loaded */}
+      {intense && (
+        <rect x="0.5" y="0.5" width={W} height={H} rx={SCREEN_RADIUS}
+          fill="none" stroke="rgba(0,212,255,0.30)" strokeWidth="1" />
+      )}
+      {/* Traveling comet — 80px segment during loading, full loop when intense */}
+      <rect x="0.5" y="0.5" width={W} height={H} rx={SCREEN_RADIUS}
+        fill="none"
+        stroke="#00d4ff"
+        strokeWidth={intense ? 1.5 : 1.5}
+        strokeLinecap="round"
+        strokeDasharray={`${cometLen} ${SCREEN_PERIM - cometLen + 1}`}
+        style={{
+          animation: `borderTrace ${intense ? 1.8 : 3}s linear infinite`,
+          filter: intense
+            ? 'drop-shadow(0 0 4px #00d4ff) drop-shadow(0 0 8px rgba(0,212,255,0.6))'
+            : 'drop-shadow(0 0 3px #00d4ff)',
+        }}
+      />
+    </svg>
+  );
+}
+
 /* ── Terminal image + screen overlay ── */
 function TerminalInner({ activeState, time, intense, pulseRef }) {
   return (
@@ -599,6 +636,7 @@ function TerminalInner({ activeState, time, intense, pulseRef }) {
         />
         <div ref={pulseRef} style={S.screenPulse} />
       </div>
+      <ScreenBorder intense={intense} />
     </div>
   );
 }
@@ -637,9 +675,9 @@ function GlobalStyles() {
         from { opacity: 0; transform: translateY(10px); }
         to   { opacity: 1; transform: translateY(0); }
       }
-      @keyframes pp-scanline {
-        0%   { transform: translateX(-100%); }
-        100% { transform: translateX(266%); }
+      @keyframes borderTrace {
+        from { stroke-dashoffset: 1054; }
+        to   { stroke-dashoffset: 0; }
       }
       @keyframes pp-flash {
         0%   { opacity: 0; }
@@ -652,8 +690,7 @@ function GlobalStyles() {
       }
       @keyframes pp-dot-pulse {
         0%, 100% { opacity: 1; transform: scale(1); }
-        50%      { opacity: 0.4; transform: scale(0.7); }
-      }
+        50%      { opacity: 0.4; transform: scale(0.7); }      }
 
       .pp-eyebrow { animation: eyebrowIn 0.6s ease both; }
       .pp-flash {
