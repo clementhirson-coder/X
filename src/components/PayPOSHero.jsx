@@ -7,33 +7,33 @@ gsap.registerPlugin(ScrollTrigger);
 /* ──────────────────────────────────────────────────────────────
    TERMINAL — Verifone product photo, transparent bg, screen black.
    terminal-photo.png is 1020×966 native; displayed at TW wide
-   (height scales proportionally → 480×456 displayed).
+   (height scales proportionally → 570×540 displayed).
    ───────────────────────────────────────────────────────────── */
-const TERMINAL_WIDTH = 480;
+const TERMINAL_WIDTH = 570;
 const TERMINAL_IMG   = 'terminal-photo.png';
 
 /* ──────────────────────────────────────────────────────────────
-   FAKE SCREEN OVERLAY — locked values from design handoff.
+   FAKE SCREEN OVERLAY — recalculated at scale 570/480 = 1.1875.
    Transform matches the terminal's perspective angle in the photo.
    ───────────────────────────────────────────────────────────── */
-const SCREEN_LEFT      = 180;
-const SCREEN_TOP       = 39;
-const SCREEN_WIDTH     = 154;
-const SCREEN_HEIGHT    = 381;
-const SCREEN_RADIUS    = 7;
-const SCREEN_TRANSFORM = 'perspective(420px) rotateY(5.5deg) rotateX(-0.5deg)';
-// 2*(W+H - 4R) + 2πR  with W=153 H=380 R=7
-const SCREEN_PERIM = 1054;
+const SCREEN_LEFT      = 214;
+const SCREEN_TOP       = 46;
+const SCREEN_WIDTH     = 183;
+const SCREEN_HEIGHT    = 453;
+const SCREEN_RADIUS    = 8;
+const SCREEN_TRANSFORM = 'perspective(500px) rotateY(5.5deg) rotateX(-0.5deg)';
+// 2*(W+H - 4R) + 2πR  with W=182 H=452 R=8
+const SCREEN_PERIM = 1254;
 
-const THW = TERMINAL_WIDTH / 2;
+const THW = TERMINAL_WIDTH / 2; // 285
 
 const PRODUCTS = [
-  { id: 'paybylink', label: 'PayByLink',     short: 'PAY-BY-LINK', color: '#00d4ff', ox: -520, oy: -120 },
-  { id: 'bnpl',      label: 'BNPL & Credit', short: 'BNPL',        color: '#a855f7', ox:  300, oy: -120 },
-  { id: 'wero',      label: 'Wero',          short: 'WERO',        color: '#6366f1', ox: -520, oy:    0 },
-  { id: 'noshow',    label: 'NoShow',        short: 'NOSHOW',      color: '#10b981', ox:  300, oy:    0 },
-  { id: 'crypto',    label: 'Crypto',        short: 'CRYPTO',      color: '#f7931a', ox: -520, oy:  120 },
-  { id: 'a2a',       label: 'A2A & Wallets', short: 'A2A',         color: '#3b82f6', ox:  300, oy:  120 },
+  { id: 'paybylink', label: 'PayByLink',     short: 'PAY-BY-LINK', color: '#00d4ff', ox: -390, oy: -120 },
+  { id: 'bnpl',      label: 'BNPL & Credit', short: 'BNPL',        color: '#a855f7', ox:  390, oy: -120 },
+  { id: 'wero',      label: 'Wero',          short: 'WERO',        color: '#6366f1', ox: -390, oy:    0 },
+  { id: 'noshow',    label: 'NoShow',        short: 'NOSHOW',      color: '#10b981', ox:  390, oy:    0 },
+  { id: 'crypto',    label: 'Crypto',        short: 'CRYPTO',      color: '#f7931a', ox: -390, oy:  120 },
+  { id: 'a2a',       label: 'A2A & Wallets', short: 'A2A',         color: '#3b82f6', ox:  390, oy:  120 },
 ];
 
 const PARTICLES = [
@@ -496,15 +496,20 @@ export default function PayPOSHero() {
           <span style={S.gradientH1}>One Terminal.</span>
           <br />Every Payment.
         </h1>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          {PRODUCTS.map((_, i) => (
-            <div key={i} style={{
-              width: 6, height: 6, borderRadius: '50%',
-              background: activeState > i ? '#00d4ff' : 'rgba(255,255,255,0.2)',
-              boxShadow: activeState > i ? '0 0 8px #00d4ff' : 'none',
-              transition: 'background 0.3s ease, box-shadow 0.3s ease',
-            }} />
-          ))}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {PRODUCTS.map((_, i) => (
+              <div key={i} style={{
+                width: 8, height: 8, borderRadius: '50%',
+                background: activeState > i ? '#00d4ff' : 'rgba(255,255,255,0.2)',
+                boxShadow: activeState > i ? '0 0 8px #00d4ff' : 'none',
+                transition: 'background 0.3s ease, box-shadow 0.3s ease',
+              }} />
+            ))}
+          </div>
+          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11, letterSpacing: '0.04em' }}>
+            {activeState} / 6 modules actifs
+          </span>
         </div>
         <p ref={subtitleRef} style={{ ...S.subtitle, opacity: 0 }}>
           PayPOS centralise tous vos moyens de paiement en un seul terminal Android.
@@ -517,7 +522,7 @@ export default function PayPOSHero() {
       {/* Orbital zone — zero-size anchor at terminal center */}
       <div style={{
         position: 'absolute',
-        right: `calc(13% + ${THW}px)`,
+        right: `calc(12% + ${THW}px)`,
         top: '50%',
         width: 0, height: 0,
       }}>
@@ -641,10 +646,36 @@ function TerminalInner({ activeState, time, intense, pulseRef }) {
         width: 300, height: 300,
         borderRadius: '50%',
         background: 'transparent',
-        boxShadow: '0 0 120px 40px rgba(0, 100, 255, 0.15)',
+        boxShadow: '0 0 160px 60px rgba(0, 100, 255, 0.18)',
         pointerEvents: 'none',
         zIndex: 0,
       }} />
+      {/* Spinning neon ring — zero-size anchor at terminal center */}
+      <div style={{ position: 'absolute', left: '50%', top: '50%', width: 0, height: 0, pointerEvents: 'none', zIndex: 2 }}>
+        <svg
+          width={TERMINAL_WIDTH + 60}
+          height={600}
+          style={{
+            position: 'absolute',
+            left: -(TERMINAL_WIDTH + 60) / 2,
+            top: -300,
+            animation: 'spin 3s linear infinite',
+            transformOrigin: 'center center',
+          }}
+          overflow="visible"
+        >
+          <ellipse
+            cx={(TERMINAL_WIDTH + 60) / 2} cy={300}
+            rx={(TERMINAL_WIDTH + 60) / 2 - 2} ry={298}
+            fill="none"
+            stroke="rgba(0,212,255,0.7)"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeDasharray="100 1819"
+            style={{ filter: 'drop-shadow(0 0 5px rgba(0,212,255,0.9))' }}
+          />
+        </svg>
+      </div>
       <img
         src={`${import.meta.env.BASE_URL}${TERMINAL_IMG}`}
         alt="PayPOS Terminal"
@@ -728,8 +759,12 @@ function GlobalStyles() {
         to   { opacity: 1; transform: translateY(0); }
       }
       @keyframes borderTrace {
-        from { stroke-dashoffset: 1054; }
+        from { stroke-dashoffset: 1254; }
         to   { stroke-dashoffset: 0; }
+      }
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
       }
       @keyframes pp-flash {
         0%   { opacity: 0; }
@@ -784,7 +819,7 @@ const S = {
     position: 'absolute', zIndex: 1, pointerEvents: 'none',
     width: 300, height: 300, borderRadius: '50%',
     background: 'radial-gradient(circle, rgba(0,180,255,0.20) 0%, transparent 70%)',
-    right: `calc(13% + ${THW - 150}px)`,
+    right: `calc(12% + ${THW - 150}px)`,
     top: 'calc(50% - 150px)',
   },
   textBlock: {
@@ -801,7 +836,7 @@ const S = {
     opacity: 0.5,
   },
   h1: {
-    fontSize: 'clamp(48px,5.5vw,80px)', fontWeight: 800,
+    fontSize: 'clamp(38px,4.5vw,64px)', fontWeight: 800,
     color: '#fff', lineHeight: 1.05, margin: 0,
   },
   gradientH1: {
@@ -858,6 +893,7 @@ const S = {
     boxShadow:           '0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.10)',
     willChange:          'transform',
     whiteSpace:          'nowrap',
+    minWidth:            140,
   },
   iconBox: {
     display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -865,6 +901,6 @@ const S = {
     borderRadius: 10, padding: 8, flexShrink: 0,
   },
   cardLabel: {
-    color: '#fff', fontWeight: 600, fontSize: 13, letterSpacing: '0.02em',
+    color: '#fff', fontWeight: 600, fontSize: 14, letterSpacing: '0.02em',
   },
 };
