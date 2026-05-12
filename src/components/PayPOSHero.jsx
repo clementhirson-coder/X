@@ -114,25 +114,28 @@ export default function PayPOSHero() {
   /* ─────────────────── Mobile layout ─────────────────── */
   if (isMobile) {
     return (
-      <section style={S.root}>
-        <FontImport />
-        <div style={S.mobileInner}>
-          <div style={S.mobileText}>
-            <Eyebrow />
-            <h1 style={S.h1Mobile}>One Terminal.<br />Every Payment.</h1>
-            <p style={S.subtitle}>
-              PayPOS centralise tous vos moyens de paiement en un seul terminal Android.
-            </p>
-          </div>
-          <img src={`${import.meta.env.BASE_URL}devices6.png`} alt="PayPOS Terminal" style={S.terminalImgMobile} />
-          <div style={S.mobileGrid}>
-            {PRODUCTS.map(p => (
-              <div key={p.id} style={{ ...S.card, borderRadius: 12, padding: '12px 16px' }}>
-                <span style={{ fontSize: 20 }}>{p.icon}</span>
-                <span style={{ ...S.cardLabel, fontSize: 12 }}>{p.label}</span>
+      <section style={{ ...S.root, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32, padding: '80px 24px', overflow: 'visible' }}>
+        <GlobalStyles />
+        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <span style={S.eyebrow} className="pp-eyebrow">Next-Gen Payment Terminal</span>
+          <div style={S.eyebrowLine} />
+          <h1 style={{ ...S.h1, fontSize: 'clamp(36px,10vw,56px)' }}>
+            <span style={S.gradientH1}>One Terminal.</span><br />Every Payment.
+          </h1>
+          <p style={S.subtitle}>
+            PayPOS centralise tous vos moyens de paiement en un seul terminal Android.
+          </p>
+        </div>
+        <img src={`${import.meta.env.BASE_URL}devices6.png`} alt="PayPOS Terminal" style={{ width: 240, mixBlendMode: 'screen' }} />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, width: '100%' }}>
+          {PRODUCTS.map(p => (
+            <div key={p.id} style={{ ...S.card, borderRadius: 14, padding: '11px 14px' }}>
+              <div style={{ ...S.iconBox, borderRadius: 8, padding: 6 }}>
+                <span style={{ fontSize: 16 }}>{p.icon}</span>
               </div>
-            ))}
-          </div>
+              <span style={{ ...S.cardLabel, fontSize: 12 }}>{p.label}</span>
+            </div>
+          ))}
         </div>
       </section>
     );
@@ -184,25 +187,8 @@ export default function PayPOSHero() {
         width: 0, height: 0,
       }}>
 
-      {/* Terminal positioning wrapper (CSS-only, no GSAP) */}
-      <div style={S.terminalWrapper}>
-        {/* GSAP-controlled inner div (floating animation) */}
-        <div ref={terminalRef} style={{ width: 340, willChange: 'transform', position: 'relative' }}>
-          <img
-            src={`${import.meta.env.BASE_URL}devices6.png`}
-            alt="PayPOS Terminal"
-            style={S.terminalImgDesktop}
-          />
-          {/* Icons absorbed into terminal screen */}
-          {absorbedIds.size > 0 && (
-            <div style={S.absorbedOverlay}>
-              {PRODUCTS.filter(p => absorbedIds.has(p.id)).map(p => (
-                <span key={p.id} style={S.absorbedIcon}>{p.icon}</span>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+        {/* Glow atmosphere — GSAP target for absorption pulse (centered on terminal via -260 offset) */}
+        <div ref={glowRef} style={S.glowAtmo} />
 
         {/* SVG connecting lines from each card to terminal center */}
         <svg width="0" height="0" style={S.svgLines} overflow="visible">
