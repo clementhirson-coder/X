@@ -205,7 +205,7 @@ export default function Hero() {
             style={{ willChange: 'transform' }}
           >
             <img
-              src="/devices6.png"
+              src={`${import.meta.env.BASE_URL}devices6.png`}
               alt="PayPOS terminal"
               className="w-full h-full object-contain select-none pointer-events-none"
               style={{ mixBlendMode: 'screen' }}
