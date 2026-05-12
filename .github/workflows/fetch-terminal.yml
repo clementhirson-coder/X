@@ -1,0 +1,39 @@
+name: Fetch terminal image (one-shot)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fetch-terminal.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download terminal image
+        run: |
+          mkdir -p public
+          curl -sSL -o public/terminal.png \
+            'https://images.prismic.io/monext/ac56WpGXnQHGZNPk_2b3034dd479fac48b5ff0cc19ba79997fed1d92c.png?w=2922&q=95&auto=format,compress'
+          file public/terminal.png
+          ls -lh public/terminal.png
+
+      - name: Remove this workflow (self-cleanup)
+        run: |
+          rm -f .github/workflows/fetch-terminal.yml
+
+      - name: Commit + push
+        run: |
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/terminal.png .github/workflows/fetch-terminal.yml
+          git commit -m 'chore: add terminal.png (auto-fetched), remove one-shot workflow'
+          git push
