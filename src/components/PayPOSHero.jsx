@@ -136,32 +136,41 @@ function ScreenStatusBar({ time, dim = false }) {
 function ScreenHeader({ time }) {
   return (
     <>
+      {/* Status bar — même disposition que l'écran de boot */}
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '6px 10px 5px',
-        color: 'rgba(255,255,255,0.55)',
-        fontSize: 11, fontWeight: 600,
+        padding: '8px 12px 4px',
+        color: 'rgba(255,255,255,0.6)',
+        fontSize: 9, fontWeight: 600, letterSpacing: '0.08em',
       }}>
-        <span style={{ letterSpacing: '0.08em' }}>{time}</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
-            <path d="M1 4.2a8 8 0 0110 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-            <path d="M2.7 6.6a5 5 0 016.6 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-            <path d="M4.2 9a2 2 0 013.6 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
-            <circle cx="6" cy="10.5" r="0.6" fill="currentColor" />
-          </svg>
-          <svg width="16" height="9" viewBox="0 0 16 9" fill="none">
-            <rect x="0.5" y="0.5" width="12" height="8" rx="1.5" stroke="currentColor" />
-            <rect x="2" y="2" width="8" height="5" fill="currentColor" />
-            <rect x="13" y="3" width="1.6" height="3" fill="currentColor" />
-          </svg>
-        </div>
+        <svg width="11" height="11" viewBox="0 0 12 12" fill="none">
+          <path d="M1 4.2a8 8 0 0110 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+          <path d="M2.7 6.6a5 5 0 016.6 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+          <path d="M4.2 9a2 2 0 013.6 0" stroke="currentColor" strokeWidth="1" strokeLinecap="round" />
+          <circle cx="6" cy="10.5" r="0.6" fill="currentColor" />
+        </svg>
+        <span>{time}</span>
+        <svg width="16" height="9" viewBox="0 0 16 9" fill="none">
+          <rect x="0.5" y="0.5" width="12" height="8" rx="1.5" stroke="currentColor" />
+          <rect x="2" y="2" width="8" height="5" fill="currentColor" />
+          <rect x="13" y="3" width="1.6" height="3" fill="currentColor" />
+        </svg>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '4px 0 9px' }}>
-        <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#00d4ff', boxShadow: '0 0 8px #00d4ff' }} />
-        <span style={{ color: '#fff', fontSize: 14, fontWeight: 700, letterSpacing: '0.12em' }}>PAYPOS · {time}</span>
+      {/* PAYPOS centré */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '5px 0 7px' }}>
+        <span style={{
+          color: '#fff',
+          fontSize: 13,
+          fontWeight: 800,
+          letterSpacing: '0.28em',
+          textTransform: 'uppercase',
+          background: 'linear-gradient(135deg, #ffffff 0%, #7dd3fc 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+        }}>PAYPOS</span>
       </div>
-      <div style={{ height: 1, margin: '0 10px', background: 'linear-gradient(90deg, transparent, rgba(0,212,255,0.3), transparent)' }} />
+      <div style={{ height: 1, margin: '0 10px', background: 'linear-gradient(90deg, transparent, rgba(0,212,255,0.35), transparent)' }} />
     </>
   );
 }
@@ -569,7 +578,6 @@ function TerminalInner({ activeState, time, intense, pulseRef }) {
         transition: 'box-shadow 0.6s ease',
       }}>
         <ScreenContent state={activeState} time={time} />
-        {/* Flash overlay — remounts on state change to re-trigger the CSS animation */}
         <div
           key={activeState}
           className="pp-flash"
@@ -585,7 +593,7 @@ function TerminalInner({ activeState, time, intense, pulseRef }) {
   );
 }
 
-/* Mobile entry — used by mobile branch */
+/* Mobile entry */
 function TerminalWithScreen({ activeState, time, scale = 1 }) {
   const intense = activeState === 6;
   return (
