@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Portefeuille PEA / PER</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #eef2f7; --surf: #fff; --surf2: #f8fafc; --surf3: #f1f5f9;
+      --bord: #e2e8f0; --bord2: #cbd5e1;
+      --txt: #0f1c2e; --txt2: #4a6280; --txt3: #94a3b8;
+      --green: #059669; --gbg: #ecfdf5; --gbr: #a7f3d0;
+      --red: #dc2626; --rbg: #fef2f2; --rbr: #fecaca;
+      --amber: #b45309; --abg: #fffbeb; --abr: #fde68a;
+      --blue: #2563eb;
+      --orange: #ea580c; --obg: #fff7ed; --obr: #fed7aa;
+      --mono: 'IBM Plex Mono', Consolas, monospace;
+      --sans: 'Sora', -apple-system, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg); color: var(--txt);
+      font-family: var(--sans); font-size: 13px;
+      padding: 22px 20px; min-height: 100vh;
+    }
+
+    /* ── Header ─────────────────────────────────────── */
+    .header {
+      display: flex; justify-content: space-between;
+      align-items: flex-start; margin-bottom: 20px;
+    }
+    .eyebrow {
+      font-size: 10px; letter-spacing: .18em;
+      text-transform: uppercase; color: var(--txt3);
+      font-family: var(--mono); margin-bottom: 4px;
+    }
+    .total-value {
+      font-family: var(--mono); font-size: 28px;
+      font-weight: 600; color: var(--txt);
+      letter-spacing: -.02em; line-height: 1;
+    }
+    .total-value em {
+      font-size: 16px; color: var(--txt3);
+      font-weight: 400; font-style: normal;
+    }
+    .timestamp {
+      font-size: 10px; color: var(--txt3);
+      font-family: var(--mono); margin-top: 4px;
+    }
+
+    /* ── Refresh button ─────────────────────────────── */
+    #refreshBtn {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--blue); color: #fff; border: none;
+      padding: 9px 16px; border-radius: 8px; cursor: pointer;
+      font-size: 11px; font-family: var(--mono); font-weight: 500;
+      transition: all .18s; box-shadow: 0 1px 3px rgba(37,99,235,.3);
+      white-space: nowrap;
+    }
+    #refreshBtn:hover { background: #1d4ed8; }
+    #refreshBtn:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── Status / Errors ────────────────────────────── */
+    .status-bar {
+      background: var(--surf3); border: 1px solid var(--bord);
+      border-radius: 8px; padding: 8px 14px; font-size: 11px;
+      color: var(--txt2); margin-bottom: 12px;
+      font-family: var(--mono); display: none;
+      align-items: center; gap: 8px;
+    }
+    .err {
+      background: var(--rbg); border: 1px solid var(--rbr);
+      border-radius: 8px; padding: 10px 14px; font-size: 11px;
+      color: var(--red); margin-bottom: 12px;
+      font-family: var(--mono); display: none;
+    }
+
+    /* ── Dividend alert ─────────────────────────────── */
+    .div-alert {
+      background: var(--obg); border: 1px solid var(--obr);
+      border-radius: 8px; padding: 10px 14px; font-size: 11px;
+      color: var(--orange); margin-bottom: 12px;
+      font-family: var(--mono); display: flex;
+      align-items: center; gap: 6px;
+    }
+
+    /* ── KPI cards ──────────────────────────────────── */
+    .kpi-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 10px; margin-bottom: 16px;
+    }
+    .kpi-card {
+      background: var(--surf); border: 1px solid var(--bord);
+      border-radius: 12px; padding: 14px 16px;
+      box-shadow: 0 1px 3px rgba(15,28,46,.05);
+      position: relative; overflow: hidden;
+      animation: fadeUp .3s ease both;
+    }
+    .kpi-card:nth-child(2) { animation-delay: .07s; }
+    .kpi-card:nth-child(3) { animation-delay: .14s; }
+    .kpi-card::after {
+      content: ''; position: absolute;
+      bottom: 0; left: 0; right: 0; height: 3px;
+      border-radius: 0 0 12px 12px;
+    }
+    .kpi-card.day::after   { background: var(--blue); }
+    .kpi-card.total::after { background: var(--green); }
+    .kpi-card.cost::after  { background: var(--bord2); }
+
+    .kpi-lbl {
+      font-size: 9px; text-transform: uppercase;
+      letter-spacing: .12em; color: var(--txt3);
+      font-family: var(--mono); margin-bottom: 6px;
+    }
+    .kpi-val {
+      font-family: var(--mono); font-size: 20px;
+      font-weight: 600; letter-spacing: -.02em; line-height: 1.1;
+    }
+    .kpi-sub {
+      font-family: var(--mono); font-size: 11px;
+      margin-top: 3px; font-weight: 500;
+    }
+    .kpi-note { font-size: 11px; color: var(--txt3); margin-top: 3px; }
+
+    .pos { color: var(--green); }
+    .neg { color: var(--red); }
+    .neu { color: var(--txt); }
+
+    /* ── Table ──────────────────────────────────────── */
+    .table-wrap {
+      background: var(--surf); border: 1px solid var(--bord);
+      border-radius: 12px; overflow: hidden;
+      box-shadow: 0 1px 3px rgba(15,28,46,.05);
+    }
+    .table-scroll { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; min-width: 900px; }
+
+    thead th {
+      background: var(--surf2); padding: 9px 10px;
+      font-size: 9px; text-transform: uppercase;
+      letter-spacing: .1em; color: var(--txt3);
+      text-align: right; cursor: pointer; user-select: none;
+      border-bottom: 1px solid var(--bord);
+      white-space: nowrap; font-family: var(--mono);
+      transition: color .15s;
+    }
+    thead th:hover { color: var(--txt2); }
+    thead th.L  { text-align: left; padding-left: 13px; }
+    thead th.act { color: var(--blue); font-weight: 600; }
+
+    tbody tr {
+      border-bottom: 1px solid var(--bord);
+      transition: background .1s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surf2); }
+    tbody tr.upcoming { background: #fff7f0; }
+    tbody tr.upcoming:hover { background: #fef0e6; }
+
+    td {
+      padding: 9px 10px; text-align: right;
+      font-family: var(--mono); font-size: 11.5px;
+      color: var(--txt); white-space: nowrap;
+    }
+    td.L {
+      text-align: left; padding-left: 13px;
+      font-family: var(--sans); color: var(--txt2); font-size: 12px;
+    }
+
+    .bdg {
+      background: var(--surf3); border: 1px solid var(--bord2);
+      border-radius: 5px; padding: 2px 6px; font-size: 10px;
+      font-weight: 600; font-family: var(--mono);
+      color: var(--txt); letter-spacing: .04em;
+    }
+    .chip {
+      border-radius: 5px; padding: 2px 6px;
+      font-size: 10px; font-family: var(--mono);
+      font-weight: 500; display: inline-block;
+    }
+    .chip.pos { background: var(--gbg); color: var(--green); border: 1px solid var(--gbr); }
+    .chip.neg { background: var(--rbg); color: var(--red); border: 1px solid var(--rbr); }
+
+    .pn { color: var(--txt3); font-size: 10px; font-family: var(--mono); }
+
+    .div-soon {
+      background: var(--obg); color: var(--orange);
+      border: 1px solid var(--obr); border-radius: 5px;
+      padding: 2px 6px; font-size: 10px;
+      font-family: var(--mono); font-weight: 600;
+      display: inline-block;
+    }
+    .div-null { color: var(--txt3); font-size: 10px; font-family: var(--mono); }
+
+    tfoot tr { background: var(--surf3); border-top: 2px solid var(--bord2); }
+    tfoot td { padding: 9px 10px; font-family: var(--mono); font-size: 11.5px; }
+    tfoot .L-lbl {
+      text-align: left; padding-left: 13px;
+      font-size: 9px; text-transform: uppercase;
+      letter-spacing: .1em; color: var(--txt3);
+    }
+
+    /* ── Legend ─────────────────────────────────────── */
+    .legend {
+      margin-top: 10px; display: flex; flex-wrap: wrap;
+      gap: 4px 14px; font-size: 9px;
+      font-family: var(--mono); color: var(--txt3);
+    }
+
+    /* ── Animations ─────────────────────────────────── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { display: inline-block; animation: spin .8s linear infinite; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(5px); }
+      to   { opacity: 1; transform: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Header ────────────────────────────────────── -->
+  <div class="header">
+    <div>
+      <div class="eyebrow">PEA / PER &middot; Euronext Paris</div>
+      <div class="total-value" id="tv">&mdash; <em>&euro;</em></div>
+      <div class="timestamp" id="lu">27 mai 2026 &middot; snapshot</div>
+    </div>
+    <button id="refreshBtn" onclick="doRefresh()">
+      <span id="si">&circlearrowleft;</span>
+      <span id="bl">Actualiser les cours</span>
+    </button>
+  </div>
+
+  <!-- ── Dividend alert ────────────────────────────── -->
+  <div class="div-alert" id="divAlert"></div>
+
+  <!-- ── Status / Error ────────────────────────────── -->
+  <div id="statusBar" class="status-bar">
+    <span class="spin">&#x27F3;</span>
+    <span id="statusMsg">Recherche&hellip;</span>
+  </div>
+  <div id="eb" class="err"></div>
+
+  <!-- ── KPI cards ─────────────────────────────────── -->
+  <div class="kpi-grid">
+    <div class="kpi-card day">
+      <div class="kpi-lbl">Gain du jour</div>
+      <div class="kpi-val" id="gjv">&mdash;</div>
+      <div class="kpi-sub" id="gjp">&mdash;</div>
+    </div>
+    <div class="kpi-card total">
+      <div class="kpi-lbl">Gain total / PRU</div>
+      <div class="kpi-val" id="gtv">&mdash;</div>
+      <div class="kpi-sub" id="gtp">&mdash;</div>
+    </div>
+    <div class="kpi-card cost">
+      <div class="kpi-lbl">Co&ucirc;t de revient</div>
+      <div class="kpi-val neu" id="cv">&mdash;</div>
+      <div class="kpi-note" id="posCount">10 positions</div>
+    </div>
+  </div>
+
+  <!-- ── Table ─────────────────────────────────────── -->
+  <div class="table-wrap">
+    <div class="table-scroll">
+      <table>
+        <thead><tr id="hr"></tr></thead>
+        <tbody id="tb"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" class="L-lbl">Total</td>
+            <td colspan="7"></td>
+            <td id="tfu" style="font-weight:600"></td>
+            <td id="tge" style="font-weight:600"></td>
+            <td id="tgp"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── Legend ─────────────────────────────────────── -->
+  <div class="legend">
+    <span>PER :</span>
+    <span style="color:#059669;font-weight:500">&lt;12&times; d&eacute;cot&eacute;</span>
+    <span style="color:#4a6280">12&ndash;20&times; normal</span>
+    <span style="color:#b45309">20&ndash;30&times; &eacute;lev&eacute;</span>
+    <span style="color:#dc2626">&ge;30&times; prime</span>
+    <span>&middot; REIT = fonci&egrave;re &middot; d&eacute;f. = b&eacute;n&eacute;fices n&eacute;gatifs &middot; suspendu = dividende coup&eacute;</span>
+    <span style="margin-left:auto" id="srcNote">Sources : divaltis.com, ideal-investisseur.fr</span>
+  </div>
+
+<script>
+/* ================================================================
+   PORTFOLIO DATA
+   ================================================================ */
+
+const POSITIONS = [
+  { ticker: 'TEP',  name: 'Teleperformance',   qty: 20.93,   pru: 80.91  },
+  { ticker: 'DSY',  name: 'Dassault Systèmes', qty: 28.229,  pru: 17.27  },
+  { ticker: 'RI',   name: 'Pernod Ricard',     qty: 20.36,   pru: 99.00  },
+  { ticker: 'TTE',  name: 'TotalEnergies',     qty: 12.075,  pru: 53.35  },
+  { ticker: 'ICAD', name: 'Icade',             qty: 58.102,  pru: 21.90  },
+  { ticker: 'GFC',  name: 'Gecina',            qty: 17.695,  pru: 93.11  },
+  { ticker: 'ELIS', name: 'Elis',              qty: 40.158,  pru: 24.28  },
+  { ticker: 'SGO',  name: 'Saint-Gobain',      qty: 19.5,    pru: 70.06  },
+  { ticker: 'ERA',  name: 'Eramet',            qty: 28.233,  pru: 51.90  },
+  { ticker: 'ETL',  name: 'Eutelsat',          qty: 275.972, pru: 3.88   },
+];
+
+let marketData = {
+  TEP:  { price: 68.66, change: 3.19,  per: 8.2,  perNote: null,   yield: 7.09, nextDivDate: '26 mai 2026',    nextDivAmt: 4.50, soon: true  },
+  DSY:  { price: 19.88, change: 1.33,  per: 21.0, perNote: null,   yield: 1.39, nextDivDate: '27 mai 2026',    nextDivAmt: 0.27, soon: true  },
+  RI:   { price: 61.54, change: 0.62,  per: 13.4, perNote: null,   yield: 7.68, nextDivDate: '22 juil. 2026',  nextDivAmt: 2.35, soon: false },
+  TTE:  { price: 78.66, change: 0.49,  per: 15.7, perNote: null,   yield: 4.42, nextDivDate: '30 juin 2026',   nextDivAmt: 0.85, soon: false },
+  ICAD: { price: 19.88, change: -1.29, per: null,  perNote: 'REIT', yield: 9.54, nextDivDate: '23 juin 2026',   nextDivAmt: 1.92, soon: false },
+  GFC:  { price: 70.85, change: -1.39, per: null,  perNote: 'REIT', yield: 8.00, nextDivDate: '7 juil. 2026',   nextDivAmt: 2.75, soon: false },
+  ELIS: { price: 27.04, change: -1.67, per: 18.4, perNote: null,   yield: 1.84, nextDivDate: '25 mai 2026',    nextDivAmt: 0.48, soon: true  },
+  SGO:  { price: 74.74, change: -2.43, per: 11.6, perNote: null,   yield: 3.00, nextDivDate: '8 juin 2026',    nextDivAmt: 2.30, soon: false },
+  ERA:  { price: 55.75, change: -6.93, per: null,  perNote: 'déf.', yield: null,  nextDivDate: null,             nextDivAmt: null,  soon: false },
+  ETL:  { price: 2.80,  change: -7.36, per: null,  perNote: 'déf.', yield: null,  nextDivDate: 'suspendu',       nextDivAmt: null,  soon: false },
+};
+
+let sortKey = 'gainPct';
+let sortDir = 'asc';
+
+/* ================================================================
+   FORMATTING HELPERS
+   ================================================================ */
+
+const fmtNum   = (n, d = 2) => new Intl.NumberFormat('fr-FR', { minimumFractionDigits: d, maximumFractionDigits: d }).format(n);
+const fmtSign  = (n, d = 2) => (n >= 0 ? '+' : '') + fmtNum(n, d);
+const fmtPct   = n => (n >= 0 ? '+' : '') + fmtNum(n) + '%';
+const cssClass = n => n >= 0 ? 'pos' : 'neg';
+const cssColor = n => n >= 0 ? 'var(--green)' : 'var(--red)';
+
+function perColor(p) {
+  if (!p || p <= 0) return 'var(--txt3)';
+  if (p < 12) return 'var(--green)';
+  if (p < 20) return 'var(--txt2)';
+  if (p < 30) return 'var(--amber)';
+  return 'var(--red)';
+}
+
+/* ================================================================
+   TABLE COLUMNS
+   ================================================================ */
+
+const COLUMNS = [
+  { key: 'ticker',    label: 'Ticker',       left: true  },
+  { key: 'name',      label: 'Société',      left: true  },
+  { key: 'price',     label: 'Cours',        left: false },
+  { key: 'change',    label: 'Var/j',        left: false },
+  { key: 'per',       label: 'PER',          left: false },
+  { key: 'yield',     label: 'Rdt div.',     left: false },
+  { key: 'nextDiv',   label: 'Prochain div.', left: true },
+  { key: 'pru',       label: 'PRU',          left: false },
+  { key: 'qty',       label: 'Qté',          left: false },
+  { key: 'value',     label: 'Valeur',       left: false },
+  { key: 'gainTotal', label: 'Gain €',       left: false },
+  { key: 'gainPct',   label: 'Gain %',       left: false },
+];
+
+/* ================================================================
+   COMPUTE ROWS
+   ================================================================ */
+
+function computeRows() {
+  return POSITIONS.map(pos => {
+    const d = marketData[pos.ticker] || { price: pos.pru, change: 0 };
+    const value = d.price * pos.qty;
+    const cost  = pos.pru * pos.qty;
+
+    return {
+      ticker:    pos.ticker,
+      name:      pos.name,
+      qty:       pos.qty,
+      pru:       pos.pru,
+      price:     d.price,
+      change:    d.change,
+      per:       d.per,
+      perNote:   d.perNote,
+      yield:     d.yield,
+      nextDiv:   d.nextDivDate,
+      nextAmt:   d.nextDivAmt,
+      soon:      d.soon,
+      value:     value,
+      cost:      cost,
+      gainTotal: value - cost,
+      gainPct:   ((d.price - pos.pru) / pos.pru) * 100,
+      gainDay:   value * d.change / 100,
+    };
+  });
+}
+
+/* ================================================================
+   RENDER
+   ================================================================ */
+
+function render() {
+  const rows    = computeRows();
+  const totalV  = rows.reduce((s, r) => s + r.value, 0);
+  const totalC  = rows.reduce((s, r) => s + r.cost, 0);
+  const gainT   = totalV - totalC;
+  const gainTP  = (gainT / totalC) * 100;
+  const gainDay = rows.reduce((s, r) => s + r.gainDay, 0);
+  const gainDP  = (gainDay / Math.max(totalV - gainDay, 1)) * 100;
+
+  // Header
+  document.getElementById('tv').innerHTML = `${fmtNum(totalV)} <em>€</em>`;
+
+  // KPI cards
+  setKPI('gjv', 'gjp', gainDay, gainDP);
+  setKPI('gtv', 'gtp', gainT, gainTP);
+  document.getElementById('cv').textContent = `${fmtNum(totalC)} €`;
+  document.getElementById('posCount').textContent = `${rows.length} positions`;
+
+  // Footer totals
+  document.getElementById('tfu').textContent = `${fmtNum(totalV)} €`;
+  const tge = document.getElementById('tge');
+  tge.style.color = cssColor(gainT);
+  tge.textContent = `${fmtSign(gainT)} €`;
+  document.getElementById('tgp').innerHTML = `<span class="chip ${cssClass(gainTP)}">${fmtPct(gainTP)}</span>`;
+
+  // Dividend alert
+  const soonRows = rows.filter(r => r.soon);
+  const alertEl = document.getElementById('divAlert');
+  if (soonRows.length > 0) {
+    const parts = soonRows.map(r => `<strong>${r.ticker}</strong> le ${r.nextDiv}`).join(' · ');
+    alertEl.innerHTML = `🔔 Détachements imminents : ${parts} — à détenir avant ces dates pour percevoir le dividende`;
+    alertEl.style.display = 'flex';
+  } else {
+    alertEl.style.display = 'none';
+  }
+
+  // Table header
+  document.getElementById('hr').innerHTML = COLUMNS.map(c =>
+    `<th class="${c.left ? 'L' : ''} ${sortKey === c.key ? 'act' : ''}" onclick="sortBy('${c.key}')">${c.label}${sortKey === c.key ? (sortDir === 'asc' ? ' ↑' : ' ↓') : ''}</th>`
+  ).join('');
+
+  // Sort rows
+  const sorted = [...rows].sort((a, b) => {
+    const sign = sortDir === 'asc' ? 1 : -1;
+    let av = a[sortKey], bv = b[sortKey];
+    if (av == null) av = sortDir === 'asc' ? Infinity : -Infinity;
+    if (bv == null) bv = sortDir === 'asc' ? Infinity : -Infinity;
+    if (typeof av === 'string') return sign * av.localeCompare(bv);
+    return av < bv ? -sign : av > bv ? sign : 0;
+  });
+
+  // Table body
+  document.getElementById('tb').innerHTML = sorted.map(r => {
+    const perCell = r.per != null
+      ? `<span style="color:${perColor(r.per)};font-weight:${r.per < 12 ? 600 : 400}">${fmtNum(r.per, 1)}×</span>`
+      : `<span class="pn">${r.perNote || '–'}</span>`;
+
+    const yieldCell = r.yield != null
+      ? `<span style="color:${r.yield >= 5 ? 'var(--green)' : r.yield >= 3 ? 'var(--txt)' : 'var(--txt2)'};font-weight:${r.yield >= 5 ? 600 : 400}">${fmtNum(r.yield, 2)}%</span>`
+      : `<span class="div-null">—</span>`;
+
+    let divCell;
+    if (r.nextDiv === 'suspendu') {
+      divCell = '<span class="div-null">suspendu</span>';
+    } else if (!r.nextDiv) {
+      divCell = '<span class="div-null">—</span>';
+    } else if (r.soon) {
+      divCell = `<span class="div-soon">⚡ ${r.nextDiv}${r.nextAmt ? ' (' + fmtNum(r.nextAmt) + '€)' : ''}</span>`;
+    } else {
+      divCell = `<span style="font-family:var(--mono);font-size:11px;color:var(--txt2)">${r.nextDiv}${r.nextAmt ? ' · ' + fmtNum(r.nextAmt) + '€' : ''}</span>`;
+    }
+
+    return `<tr class="${r.soon ? 'upcoming' : ''}">
+      <td class="L"><span class="bdg">${r.ticker}</span></td>
+      <td class="L">${r.name}</td>
+      <td>${fmtNum(r.price)} €</td>
+      <td style="color:${cssColor(r.change)};font-weight:500">${fmtPct(r.change)}</td>
+      <td>${perCell}</td>
+      <td>${yieldCell}</td>
+      <td class="L" style="min-width:160px">${divCell}</td>
+      <td style="color:var(--txt2)">${fmtNum(r.pru)} €</td>
+      <td style="color:var(--txt2)">${fmtNum(r.qty, 3)}</td>
+      <td style="font-weight:500">${fmtNum(r.value)} €</td>
+      <td style="color:${cssColor(r.gainTotal)};font-weight:500">${fmtSign(r.gainTotal)} €</td>
+      <td><span class="chip ${cssClass(r.gainPct)}">${fmtPct(r.gainPct)}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function setKPI(valId, pctId, val, pct) {
+  const valEl = document.getElementById(valId);
+  const pctEl = document.getElementById(pctId);
+  valEl.className = `kpi-val ${cssClass(val)}`;
+  valEl.textContent = `${fmtSign(val)} €`;
+  pctEl.className = `kpi-sub ${cssClass(pct)}`;
+  pctEl.textContent = fmtPct(pct);
+}
+
+function sortBy(key) {
+  if (sortKey === key) {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortKey = key;
+    sortDir = 'asc';
+  }
+  render();
+}
+
+/* ================================================================
+   LIVE REFRESH (Anthropic API web search)
+   ================================================================ */
+
+async function doRefresh() {
+  const btn = document.getElementById('refreshBtn');
+  const si  = document.getElementById('si');
+  const bl  = document.getElementById('bl');
+  const eb  = document.getElementById('eb');
+  const sb  = document.getElementById('statusBar');
+  const sm  = document.getElementById('statusMsg');
+
+  btn.disabled = true;
+  si.className = 'spin';
+  bl.textContent = 'En cours…';
+  eb.style.display = 'none';
+  sb.style.display = 'flex';
+  sm.textContent = 'Connexion API…';
+
+  try {
+    const tickers = POSITIONS.map(p => `${p.ticker} (${p.name})`).join(', ');
+    const prompt = `Find current stock price (EUR) and today's percentage change for these Euronext Paris stocks: ${tickers}. Return ONLY valid JSON, no markdown, no explanation. Format: {"TEP":{"price":68.5,"change":1.2},...}`;
+
+    let messages = [{ role: 'user', content: prompt }];
+    let finalText = null;
+
+    for (let turn = 0; turn < 8; turn++) {
+      sm.textContent = `Tour ${turn + 1} — appel API…`;
+
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+          messages,
+        }),
+      });
+
+      if (!resp.ok) {
+        const t = await resp.text();
+        throw new Error(`HTTP ${resp.status}: ${t.slice(0, 200)}`);
+      }
+
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+
+      messages.push({ role: 'assistant', content: data.content });
+
+      if (data.stop_reason === 'end_turn') {
+        const texts = data.content.filter(b => b.type === 'text').map(b => b.text);
+        if (texts.length) finalText = texts.join('');
+        break;
+      }
+
+      if (data.stop_reason === 'tool_use') {
+        sm.textContent = 'Recherche web…';
+        const results = data.content
+          .filter(b => b.type === 'tool_use')
+          .map(b => ({ type: 'tool_result', tool_use_id: b.id, content: '' }));
+        messages.push({ role: 'user', content: results });
+      }
+    }
+
+    if (!finalText) throw new Error('Pas de réponse textuelle reçue.');
+
+    const match = finalText.replace(/```[a-z]*\n?/g, '').trim().match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('JSON introuvable. Réponse : ' + finalText.slice(0, 200));
+
+    const parsed = JSON.parse(match[0]);
+    for (const tk of Object.keys(parsed)) {
+      if (marketData[tk]) {
+        marketData[tk].price  = +parsed[tk].price;
+        marketData[tk].change = +parsed[tk].change;
+      }
+    }
+
+    const now = new Date().toLocaleString('fr-FR', {
+      day: 'numeric', month: 'long', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    });
+    document.getElementById('lu').textContent = now + ' · live';
+    document.getElementById('srcNote').textContent = 'Cours live · ' + now;
+    render();
+    sb.style.display = 'none';
+
+  } catch (e) {
+    sb.style.display = 'none';
+    eb.textContent = '⚠ ' + e.message;
+    eb.style.display = 'block';
+  }
+
+  btn.disabled = false;
+  si.className = '';
+  bl.textContent = 'Actualiser les cours';
+}
+
+/* ── Initial render ──────────────────────────────── */
+render();
+</script>
+</body>
+</html>
