@@ -102,7 +102,8 @@ export default function Navbar() {
         </div>
 
         {/* Desktop CTA */}
-        <button data-cursor="hover" className="pp-nav-cta" style={{
+        <a href="#contact" data-cursor="hover" className="pp-nav-cta" style={{
+          textDecoration: 'none',
           background: 'transparent',
           border: '1px solid rgba(0,212,255,0.4)',
           color: '#00d4ff',
@@ -111,7 +112,7 @@ export default function Navbar() {
           fontFamily: 'Manrope, sans-serif',
         }}>
           Demander une démo
-        </button>
+        </a>
 
         {/* Mobile hamburger */}
         <button

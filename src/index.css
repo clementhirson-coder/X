@@ -13,6 +13,7 @@ html {
 }
 
 body {
+  overflow-x: clip;
   background: #0a0a0f;
   color: #f1f5f9;
   -webkit-font-smoothing: antialiased;

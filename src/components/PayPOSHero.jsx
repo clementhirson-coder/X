@@ -26,7 +26,7 @@ const TOTAL_DUR   = 6 * PRODUCT_DUR;             // 15.6
 const END_SCROLL  = 600;
 const CARD_H_EST  = 52;
 
-const PRODUCTS = [
+export const PRODUCTS = [
   { id: 'paybylink', label: 'PayByLink',     short: 'PAY-BY-LINK', color: '#00d4ff', ox: -1 },
   { id: 'bnpl',      label: 'BNPL & Credit', short: 'BNPL',        color: '#a855f7', ox:  1 },
   { id: 'wero',      label: 'Wero',          short: 'WERO',        color: '#6366f1', ox: -1 },
@@ -64,7 +64,7 @@ function useFrenchTime() {
 }
 
 /* ── Branded SVG icons ── */
-function ProductIcon({ id, size = 24, color }) {
+export function ProductIcon({ id, size = 24, color }) {
   const c = color || (PRODUCTS.find(p => p.id === id)?.color ?? '#00d4ff');
   const common = { width: size, height: size, viewBox: '0 0 32 32', fill: 'none' };
   switch (id) {
@@ -338,6 +338,8 @@ function GrainLayer({ intense }) {
       width: 600, height: 700,
       pointerEvents: 'none',
       zIndex: 1,
+      WebkitMaskImage: 'radial-gradient(ellipse 50% 50% at 50% 50%, #000 40%, transparent 100%)',
+      maskImage:       'radial-gradient(ellipse 50% 50% at 50% 50%, #000 40%, transparent 100%)',
     }}>
       <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden>
         <defs>
@@ -464,17 +466,21 @@ function TerminalInner({ activeState, time, intense, pulseRef }) {
 }
 
 /* Mobile entry */
+const TERMINAL_RATIO = 966 / 1020; // terminal-photo.png height / width
+
 function TerminalWithScreen({ activeState, time, scale = 1 }) {
   const intense = activeState === 6;
   return (
-    <div style={{
-      position: 'relative',
-      width: TERMINAL_WIDTH,
-      transform: `scale(${scale})`,
-      transformOrigin: 'center top',
-      animation: 'terminalFloat 3s ease-in-out infinite',
-    }}>
-      <TerminalInner activeState={activeState} time={time} intense={intense} pulseRef={{ current: null }} />
+    <div className="pp-terminal-float" style={{ width: TERMINAL_WIDTH * scale, height: TERMINAL_WIDTH * TERMINAL_RATIO * scale, position: 'relative' }}>
+      {/* scale lives on the inner box: a keyframed transform on the same node would override it */}
+      <div style={{
+        position: 'absolute', left: 0, top: 0,
+        width: TERMINAL_WIDTH,
+        transform: `scale(${scale})`,
+        transformOrigin: 'left top',
+      }}>
+        <TerminalInner activeState={activeState} time={time} intense={intense} pulseRef={{ current: null }} />
+      </div>
     </div>
   );
 }
@@ -621,9 +627,10 @@ export default function PayPOSHero() {
           tl.to(lp, { opacity: 0, duration: PHASE4, ease: 'power1.out' }, at + PHASE1 + PHASE2);
         });
 
-        tl.fromTo(subtitleRef.current, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5 }, TOTAL_DUR - 1.5);
-        tl.fromTo(ctaRef.current,      { opacity: 0 },         { opacity: 1, duration: 0.4 },       TOTAL_DUR - 0.8);
       }, section);
+      // Sections below were measured before the pin existed: re-measure them.
+      ScrollTrigger.sort();
+      ScrollTrigger.refresh();
     };
 
     const handleResize = () => {
@@ -649,7 +656,7 @@ export default function PayPOSHero() {
   /* ── Mobile layout ── */
   if (isMobile) {
     return (
-      <section style={{ ...S.root, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32, padding: '80px 24px', overflow: 'visible' }}>
+      <section style={{ ...S.root, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 32, padding: '80px 24px', overflow: 'hidden' }}>
         <GlobalStyles />
         <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: 16 }}>
           <span style={S.eyebrow} className="pp-eyebrow">Next-Gen Payment Terminal</span>
@@ -660,21 +667,11 @@ export default function PayPOSHero() {
           <p style={S.subtitle}>
             PayPOS centralise tous vos moyens de paiement en un seul terminal Android.
           </p>
-          <button style={{ ...S.ctaBtn, alignSelf: 'center' }} className="pp-cta-btn">
+          <a href="#produits" style={{ ...S.ctaBtn, alignSelf: 'center', textDecoration: 'none' }} className="pp-cta-btn">
             Découvrir PayPOS →
-          </button>
+          </a>
         </div>
-        <TerminalWithScreen activeState={6} time={time} scale={0.78} />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, width: '100%' }}>
-          {PRODUCTS.map(p => (
-            <div key={p.id} style={{ ...S.card, borderRadius: 14, padding: '11px 14px' }}>
-              <div style={{ ...S.iconBox, background: `${p.color}1A` }}>
-                <ProductIcon id={p.id} size={18} />
-              </div>
-              <span style={{ ...S.cardLabel, fontSize: 12 }}>{p.label}</span>
-            </div>
-          ))}
-        </div>
+        <TerminalWithScreen activeState={6} time={time} scale={0.72} />
       </section>
     );
   }
@@ -724,12 +721,13 @@ export default function PayPOSHero() {
             {activeState} / 6 modules actifs
           </span>
         </div>
-        <p ref={subtitleRef} style={{ ...S.subtitle, opacity: 0 }}>
+        <p ref={subtitleRef} className="pp-hero-in" style={{ ...S.subtitle, animationDelay: '0.25s' }}>
           PayPOS centralise tous vos moyens de paiement en un seul terminal Android.
         </p>
-        <button ref={ctaRef} style={{ ...S.ctaBtn, opacity: 0 }} className="pp-cta-btn">
+        <a ref={ctaRef} href="#produits" data-cursor="hover" className="pp-cta-btn pp-hero-in"
+          style={{ ...S.ctaBtn, textDecoration: 'none', animationDelay: '0.4s' }}>
           Découvrir PayPOS →
-        </button>
+        </a>
       </div>
 
       {/* Electric neon lines SVG overlay */}
@@ -857,6 +855,11 @@ function GlobalStyles() {
       }
 
       .pp-eyebrow { animation: eyebrowIn 0.6s ease both; }
+      .pp-hero-in { animation: eyebrowIn 0.7s cubic-bezier(0.16,1,0.3,1) both; }
+      .pp-terminal-float { animation: terminalFloat 3s ease-in-out infinite; }
+      @media (prefers-reduced-motion: reduce) {
+        .pp-terminal-float, .pp-hero-in, .pp-eyebrow { animation: none !important; }
+      }
       .pp-cta-btn:hover {
         transform: scale(1.03);
         box-shadow: 0 0 30px rgba(0,212,255,0.4);
